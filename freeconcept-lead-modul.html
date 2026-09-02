@@ -38,7 +38,10 @@ tailwind.config = {
 
 <style>
   #fc-app *{box-sizing:border-box}
-  #fc-app{font-family:Inter,'Segoe UI',Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;color:#0C1E30}
+  /* color-scheme låser select/checkbox/textarea til lyst udseende,
+     så modulet også holder på et CMS-tema i mørk tilstand */
+  #fc-app{font-family:Inter,'Segoe UI',Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;
+          color:#0C1E30;color-scheme:light;background:#F5F7FA}
 
   /* --- Valgkort (radio/checkbox som klikbare kort) --- */
   .fc-opt{display:block;cursor:pointer;position:relative}
