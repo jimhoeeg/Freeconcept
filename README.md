@@ -30,6 +30,8 @@ Første udgivelse tager et minut eller to.
 ## Sådan ser det ud
 
 ### Trin 1 — vælg spor
+Sitets egen header og footer er bygget med som **demo-ramme**, så modulet kan vises
+i sammenhæng. Modulet ligger i menuen som punktet *Prisberegner*.
 ![Trin 1: vælg mellem firmagaver og firmatøj](docs/screenshots/01-vaelg-spor.png)
 
 ### Trin 2 — konfigurator med ekspertviden
@@ -49,6 +51,9 @@ Alle tre forædlingsmetoder regnes på kundens eget antal, så break-even bliver
 
 ### Mobil
 <img src="docs/screenshots/06-mobil.png" alt="Modulet på mobil med live skattestatus" width="380">
+
+### Footer
+![Sitets footer med kontakt, hurtige links og kundeservice](docs/screenshots/07-footer.png)
 
 ## Flow
 
@@ -84,6 +89,12 @@ er fastlåst, og to klæbende bjælker ville dække indholdet.
 
 ## Indsæt på hjemmesiden
 
+> **Fjern demo-rammen først.** Header og footer i filen er kun med, så demoen kan
+> vises i sammenhæng. På freeconcept.dk står de der allerede, og to headere oven
+> på hinanden ser ud som en fejl. Slet de to blokke mærket `DEMO-RAMME` i markup'en
+> — eller sæt `demoChrome: false` i `FC_CONFIG`, så fjernes de ved indlæsning.
+> At slette dem er det reneste; med `false` kan de nå at blinke kortvarigt forbi.
+
 **WordPress (anbefalet):** opret en ny side, tilføj blokken *Custom HTML* /
 *Egen HTML* og indsæt hele filens indhold. Modulet har sit eget navnerum
 (`#fc-app` og klasser med `fc-`-præfiks), så det kolliderer ikke med temaets styles.
@@ -109,6 +120,7 @@ Alt, der normalt skal justeres, ligger samlet øverst i `<script>`-blokken:
 | `FC_LINKS` | URL'er til jeres kategorisider. Vises på kvitteringen, så kunden kan kigge videre. Står som `/firmatoj` og `/merchandise` og skal rettes til jeres faktiske stier. |
 | `KB` | Teksterne i ekspert-videnboksene. |
 | `FC_PRICING.tax2026` | Beløbsgrænser for julegave, bagatelgrænse, reklameartikel og jubilæumsgratiale. |
+| `FC_CONFIG.demoChrome` | `true` viser sitets header og footer (til demoen). Sæt til `false` på det rigtige site. |
 | `tailwind.config` | Farvepaletten. |
 
 ### Leadet
