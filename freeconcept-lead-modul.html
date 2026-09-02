@@ -1,0 +1,1522 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Freeconcept – Prisberegner &amp; Rådgivning</title>
+</head>
+<body>
+<!-- ============================================================
+     FREECONCEPT.DK – INTERAKTIVT LEAD-GENERERINGSMODUL
+     Selvstændig HTML-fil. Kan indsættes direkte i WordPress
+     (Custom HTML-blok / iframe) eller som selvstændig side.
+     Ingen build, ingen dependencies ud over Tailwind CDN.
+     ------------------------------------------------------------
+     TILPAS HER:
+       1) FC_CONFIG.endpoint  -> jeres formular-endpoint
+       2) FC_PRICING          -> jeres reelle kostpriser/marginer
+       3) Farver i tailwind.config nedenfor
+     ============================================================ -->
+
+<script src="https://cdn.tailwindcss.com/3.4.16"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        navy: { 950:'#07121D', 900:'#0C1E30', 850:'#11293F', 800:'#173350', 700:'#1F4568',
+                600:'#2A5C89', 500:'#3B7AB0', 400:'#5F9CCE', 300:'#93BFE2', 100:'#DCEAF6' },
+        gold: { 500:'#E3A82B', 400:'#F0BC50', 100:'#FDF3DE' },
+        slatey:{ 50:'#F5F7FA', 100:'#EDF1F6', 200:'#DFE6EE', 300:'#C3CFDC', 500:'#6B7C90', 700:'#3D4C5C' }
+      },
+      fontFamily: { sans:['Inter','Segoe UI','Helvetica Neue','Arial','sans-serif'] },
+      boxShadow: { card:'0 1px 2px rgba(12,30,48,.04), 0 8px 24px -12px rgba(12,30,48,.18)' }
+    }
+  }
+}
+</script>
+
+<style>
+  #fc-app *{box-sizing:border-box}
+  #fc-app{font-family:Inter,'Segoe UI',Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;color:#0C1E30}
+
+  /* --- Valgkort (radio/checkbox som klikbare kort) --- */
+  .fc-opt{display:block;cursor:pointer;position:relative}
+  .fc-opt input{position:absolute;opacity:0;width:0;height:0}
+  .fc-opt .fc-box{
+    border:1.5px solid #DFE6EE;background:#fff;border-radius:12px;padding:14px 16px;height:100%;
+    transition:border-color .16s ease, box-shadow .16s ease, background-color .16s ease, transform .16s ease;
+  }
+  .fc-opt:hover .fc-box{border-color:#5F9CCE;transform:translateY(-1px)}
+  .fc-opt input:checked + .fc-box{
+    border-color:#1F4568;background:#F5F9FD;box-shadow:0 0 0 3px rgba(31,69,104,.12);
+  }
+  .fc-opt input:focus-visible + .fc-box{outline:2px solid #E3A82B;outline-offset:2px}
+  .fc-opt input:checked + .fc-box .fc-tick{opacity:1;transform:scale(1)}
+  .fc-tick{opacity:0;transform:scale(.6);transition:.18s ease}
+
+  /* --- Antals-chips --- */
+  .fc-chip{border:1.5px solid #DFE6EE;background:#fff;border-radius:999px;padding:6px 14px;font-size:13px;font-weight:600;color:#3D4C5C;transition:.15s}
+  .fc-chip:hover{border-color:#5F9CCE;color:#1F4568}
+  .fc-chip[aria-pressed="true"]{background:#0C1E30;border-color:#0C1E30;color:#fff}
+
+  /* --- Ekspert-viden boks --- */
+  .fc-kb{border-left:4px solid #E3A82B;background:linear-gradient(90deg,#FDF6E7 0%,#FBFCFE 60%);
+         border-radius:0 12px 12px 0;padding:16px 18px;animation:fcIn .3s ease}
+  .fc-kb h4{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:#9A6F10;font-weight:800}
+  .fc-kb p{font-size:14px;line-height:1.65;color:#3D4C5C;margin-top:6px}
+  .fc-kb strong{color:#0C1E30;font-weight:700}
+  .fc-kb ul{margin-top:8px;font-size:14px;line-height:1.6;color:#3D4C5C}
+  .fc-kb li{padding-left:16px;position:relative;margin-top:5px}
+  .fc-kb li:before{content:"";position:absolute;left:0;top:8px;width:6px;height:6px;border-radius:50%;background:#E3A82B}
+
+  @keyframes fcIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .fc-in{animation:fcIn .32s ease}
+  .fc-hide{display:none !important}
+
+  /* --- Inputs --- */
+  .fc-input{width:100%;border:1.5px solid #DFE6EE;border-radius:10px;padding:12px 14px;font-size:15px;background:#fff;transition:.15s;color:#0C1E30}
+  .fc-input:focus{outline:none;border-color:#1F4568;box-shadow:0 0 0 3px rgba(31,69,104,.12)}
+  .fc-input::placeholder{color:#9BA9B9}
+  .fc-input.fc-err{border-color:#D14343;background:#FEF7F7}
+  .fc-lbl{font-size:13px;font-weight:600;color:#3D4C5C;margin-bottom:6px;display:block}
+
+  /* --- Stepper --- */
+  .fc-step-dot{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;
+    background:rgba(255,255,255,.12);color:#93BFE2;border:1.5px solid rgba(147,191,226,.35);transition:.25s}
+  .fc-step.is-active .fc-step-dot{background:#E3A82B;color:#07121D;border-color:#E3A82B}
+  .fc-step.is-done .fc-step-dot{background:#5F9CCE;color:#07121D;border-color:#5F9CCE}
+  .fc-step.is-active .fc-step-label{color:#fff}
+  .fc-step-label{font-size:12px;font-weight:600;color:#93BFE2;transition:.25s}
+
+  /* --- Skat-status pille --- */
+  .fc-pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:5px 11px;border-radius:999px}
+  .fc-pill-ok{background:#E6F6EC;color:#166534}
+  .fc-pill-warn{background:#FDF1DC;color:#92610A}
+  .fc-pill-no{background:#FBE9E9;color:#9B1C1C}
+
+  /* --- Sticky pris-bar --- */
+  #fc-sticky{position:sticky;bottom:0;z-index:30;transition:transform .3s ease, opacity .3s ease}
+  #fc-sticky.fc-off{transform:translateY(120%);opacity:0;pointer-events:none}
+
+  /* --- Skjul number-spinners --- */
+  #fc-app input[type=number]::-webkit-outer-spin-button,
+  #fc-app input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  #fc-app input[type=number]{-moz-appearance:textfield}
+
+  .fc-tbl td,.fc-tbl th{padding:10px 12px;font-size:13.5px}
+  .fc-tbl tr+tr td{border-top:1px solid rgba(147,191,226,.18)}
+</style>
+
+<div id="fc-app" class="bg-slatey-50 min-h-screen">
+
+  <!-- ======================= HEADER + STEPPER ======================= -->
+  <header class="bg-navy-950 text-white">
+    <div class="max-w-6xl mx-auto px-5 sm:px-8 pt-7 pb-6">
+      <div class="flex items-center justify-between gap-4 flex-wrap">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-lg bg-gold-500 grid place-items-center font-black text-navy-950 text-lg">F</div>
+          <div>
+            <div class="font-extrabold tracking-tight text-[17px] leading-none">Freeconcept</div>
+            <div class="text-[11px] text-navy-300 tracking-[.12em] uppercase mt-1">Erhvervsgaver &amp; profilbeklædning</div>
+          </div>
+        </div>
+        <button id="fc-restart" class="fc-hide text-[13px] font-semibold text-navy-300 hover:text-white transition flex items-center gap-1.5">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+          Start forfra
+        </button>
+      </div>
+
+      <nav class="mt-7 flex items-center gap-2 sm:gap-4 overflow-x-auto pb-1" aria-label="Fremdrift">
+        <div class="fc-step is-active flex items-center gap-2.5 shrink-0" data-step="1">
+          <span class="fc-step-dot">1</span><span class="fc-step-label whitespace-nowrap">Vælg spor</span>
+        </div>
+        <div class="h-px w-5 sm:w-10 bg-navy-700 shrink-0"></div>
+        <div class="fc-step flex items-center gap-2.5 shrink-0" data-step="2">
+          <span class="fc-step-dot">2</span><span class="fc-step-label whitespace-nowrap">Konfigurator</span>
+        </div>
+        <div class="h-px w-5 sm:w-10 bg-navy-700 shrink-0"></div>
+        <div class="fc-step flex items-center gap-2.5 shrink-0" data-step="3">
+          <span class="fc-step-dot">3</span><span class="fc-step-label whitespace-nowrap">Åben pris</span>
+        </div>
+        <div class="h-px w-5 sm:w-10 bg-navy-700 shrink-0"></div>
+        <div class="fc-step flex items-center gap-2.5 shrink-0" data-step="4">
+          <span class="fc-step-dot">4</span><span class="fc-step-label whitespace-nowrap">Materiale</span>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-5 sm:px-8 py-9 sm:py-12">
+
+  <!-- ======================= TRIN 1: VÆLG SPOR ======================= -->
+  <section id="fc-s1" class="fc-in">
+    <p class="text-[11px] font-bold tracking-[.16em] uppercase text-navy-600">Trin 1 af 4</p>
+    <h1 class="mt-2 text-[28px] sm:text-[38px] leading-[1.15] font-extrabold tracking-tight text-navy-950 max-w-2xl">
+      Se prisen først.<br class="hidden sm:block"> Tal med en sælger bagefter.
+    </h1>
+    <p class="mt-4 text-[15px] sm:text-base text-slatey-700 leading-relaxed max-w-2xl">
+      Vi tror på åbne priser. Konfigurér din løsning nedenfor, så får du en realistisk stykpris og totalpris
+      <strong class="text-navy-900">ex. moms direkte på skærmen</strong> — før du afgiver en eneste oplysning.
+      Undervejs deler vi den viden, vores kunder normalt først får på et møde.
+    </p>
+
+    <div class="mt-9 grid md:grid-cols-2 gap-5">
+      <button class="fc-track group text-left bg-white rounded-2xl border-[1.5px] border-slatey-200 hover:border-navy-700 shadow-card hover:shadow-lg transition-all duration-200 p-7 focus:outline-none focus-visible:ring-4 focus-visible:ring-navy-700/20" data-track="A">
+        <div class="flex items-start justify-between">
+          <div class="w-12 h-12 rounded-xl bg-navy-100 grid place-items-center text-navy-700 group-hover:bg-navy-950 group-hover:text-gold-500 transition-colors">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M3 13h18M12 8v13"/><path d="M12 8S9.5 3.5 7.5 4.5 8 8 12 8zM12 8s2.5-4.5 4.5-3.5S16 8 12 8z"/></svg>
+          </div>
+          <span class="text-[11px] font-bold tracking-wider uppercase text-slatey-500 bg-slatey-100 px-2.5 py-1 rounded-md">Spor A</span>
+        </div>
+        <h2 class="mt-5 text-[21px] font-extrabold tracking-tight text-navy-950">Firmagaver &amp; Julegaver</h2>
+        <p class="mt-2 text-[14.5px] text-slatey-700 leading-relaxed">
+          Julegaver, jubilæer og kundegaver. Med indbygget tjek af SKATs bagatelgrænser og rådgivning om vælg-selv-portaler.
+        </p>
+        <p class="mt-4 text-[12.5px] font-semibold text-slatey-500">Typisk for: HR · Office Manager · Direktion</p>
+        <span class="mt-5 inline-flex items-center gap-2 text-[14px] font-bold text-navy-700 group-hover:gap-3 transition-all">
+          Beregn gavebudget
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </span>
+      </button>
+
+      <button class="fc-track group text-left bg-white rounded-2xl border-[1.5px] border-slatey-200 hover:border-navy-700 shadow-card hover:shadow-lg transition-all duration-200 p-7 focus:outline-none focus-visible:ring-4 focus-visible:ring-navy-700/20" data-track="B">
+        <div class="flex items-start justify-between">
+          <div class="w-12 h-12 rounded-xl bg-navy-100 grid place-items-center text-navy-700 group-hover:bg-navy-950 group-hover:text-gold-500 transition-colors">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 3 12 6l3.5-3 4.5 2.2-2 5-2 .5V21H8V10.7l-2-.5-2-5z"/></svg>
+          </div>
+          <span class="text-[11px] font-bold tracking-wider uppercase text-slatey-500 bg-slatey-100 px-2.5 py-1 rounded-md">Spor B</span>
+        </div>
+        <h2 class="mt-5 text-[21px] font-extrabold tracking-tight text-navy-950">Firmatøj &amp; Tekstil Merch</h2>
+        <p class="mt-2 text-[14.5px] text-slatey-700 leading-relaxed">
+          Arbejdstøj, profilbeklædning og messe-merch. Med materialevalg, forædlingsmetode og live sammenligning af tryk vs. broderi.
+        </p>
+        <p class="mt-4 text-[12.5px] font-semibold text-slatey-500">Typisk for: Marketing · Indkøb · Event</p>
+        <span class="mt-5 inline-flex items-center gap-2 text-[14px] font-bold text-navy-700 group-hover:gap-3 transition-all">
+          Beregn tekstilpris
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </span>
+      </button>
+    </div>
+
+    <div class="mt-8 flex flex-wrap gap-x-7 gap-y-3 text-[13px] text-slatey-500 font-medium">
+      <span class="flex items-center gap-2"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2A5C89" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Priser ex. moms — uden login</span>
+      <span class="flex items-center gap-2"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2A5C89" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Svar fra rådgiver inden for 1 hverdag</span>
+      <span class="flex items-center gap-2"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2A5C89" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Ingen binding</span>
+    </div>
+  </section>
+
+  <!-- ======================= TRIN 2: KONFIGURATOR ======================= -->
+  <section id="fc-s2" class="fc-hide">
+    <button class="fc-back mb-6 text-[13px] font-semibold text-slatey-500 hover:text-navy-800 transition inline-flex items-center gap-1.5" data-to="1">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+      Skift spor
+    </button>
+
+    <p class="text-[11px] font-bold tracking-[.16em] uppercase text-navy-600">Trin 2 af 4</p>
+    <h2 id="fc-s2-title" class="mt-2 text-[26px] sm:text-[32px] font-extrabold tracking-tight text-navy-950"></h2>
+    <p id="fc-s2-sub" class="mt-2.5 text-[15px] text-slatey-700 max-w-2xl leading-relaxed"></p>
+
+    <!-- ---------- SPOR A: GAVER ---------- -->
+    <div id="fc-form-A" class="fc-hide mt-8 space-y-7">
+
+      <!-- A1: Anledning -->
+      <div class="bg-white rounded-2xl border border-slatey-200 shadow-card p-6 sm:p-7">
+        <div class="flex items-baseline gap-3">
+          <span class="text-[11px] font-black text-navy-400">01</span>
+          <h3 class="text-[17px] font-bold text-navy-950">Hvad er anledningen?</h3>
+        </div>
+        <div class="mt-5 grid sm:grid-cols-3 gap-3" data-field="occasion">
+          <label class="fc-opt"><input type="radio" name="a-occasion" value="jul">
+            <div class="fc-box"><div class="flex items-start justify-between gap-2">
+              <span class="font-bold text-[15px] text-navy-950">Julegave</span>
+              <svg class="fc-tick shrink-0" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1F4568" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+              <p class="mt-1.5 text-[13px] text-slatey-500 leading-snug">Den årlige julegave til medarbejderne</p></div></label>
+          <label class="fc-opt"><input type="radio" name="a-occasion" value="jubi">
+            <div class="fc-box"><div class="flex items-start justify-between gap-2">
+              <span class="font-bold text-[15px] text-navy-950">Jubilæum</span>
+              <svg class="fc-tick shrink-0" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1F4568" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+              <p class="mt-1.5 text-[13px] text-slatey-500 leading-snug">Medarbejder- eller firmajubilæum</p></div></label>
+          <label class="fc-opt"><input type="radio" name="a-occasion" value="kunde">
+            <div class="fc-box"><div class="flex items-start justify-between gap-2">
+              <span class="font-bold text-[15px] text-navy-950">Kundegave</span>
+              <svg class="fc-tick shrink-0" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1F4568" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+              <p class="mt-1.5 text-[13px] text-slatey-500 leading-snug">Relationsgave til kunder &amp; samarbejdspartnere</p></div></label>
+        </div>
+        <div class="mt-5" data-kb="occasion"></div>
+      </div>
+
+      <!-- A2: Antal + budget -->
+      <div class="bg-white rounded-2xl border border-slatey-200 shadow-card p-6 sm:p-7">
+        <div class="flex items-baseline gap-3">
+          <span class="text-[11px] font-black text-navy-400">02</span>
+          <h3 class="text-[17px] font-bold text-navy-950">Hvor mange modtagere?</h3>
+        </div>
+        <div class="mt-5 flex flex-wrap items-center gap-3">
+          <div class="relative">
+            <input id="fc-a-qty" type="number" min="1" max="100000" value="100" class="fc-input !w-[150px] font-bold text-[17px] pr-14" aria-label="Antal modtagere">
+            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-[13px] font-semibold text-slatey-500 pointer-events-none">stk.</span>
+          </div>
+          <div class="flex flex-wrap gap-2" data-qtychips="fc-a-qty">
+            <button type="button" class="fc-chip" data-v="25">25</button>
+            <button type="button" class="fc-chip" data-v="50">50</button>
+            <button type="button" class="fc-chip" data-v="100">100</button>
+            <button type="button" class="fc-chip" data-v="250">250</button>
+            <button type="button" class="fc-chip" data-v="500">500</button>
+          </div>
+        </div>
+
+        <div class="mt-8 flex items-baseline gap-3">
+          <span class="text-[11px] font-black text-navy-400">03</span>
+          <h3 class="text-[17px] font-bold text-navy-950">Budget-bånd pr. gave <span class="font-medium text-slatey-500 text-[14px]">(ex. moms)</span></h3>
+        </div>
+        <div class="mt-5 grid sm:grid-cols-2 lg:grid-cols-4 gap-3" data-field="band">
+          <label class="fc-opt"><input type="radio" name="a-band" value="225">
+            <div class="fc-box"><div class="flex items-start justify-between gap-2">
+              <span class="font-extrabold text-[19px] text-navy-950">225 kr.</span>
+              <svg class="fc-tick shrink-0 mt-1" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1F4568" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+              <p class="mt-1 text-[12.5px] font-semibold text-navy-600">Entry</p>
+              <p class="mt-1.5 text-[13px] text-slatey-500 leading-snug">Vinsæt, plaid, mindre køkkenudstyr, kvalitetschokolade</p></div></label>
+          <label class="fc-opt"><input type="radio" name="a-band" value="400">
+            <div class="fc-box"><div class="flex items-start justify-between gap-2">
+              <span class="font-extrabold text-[19px] text-navy-950">400 kr.</span>
+              <svg class="fc-tick shrink-0 mt-1" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1F4568" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+              <p class="mt-1 text-[12.5px] font-semibold text-navy-600">Standard</p>
+              <p class="mt-1.5 text-[13px] text-slatey-500 leading-snug">Køkkenknive, højttaler, dyner/håndklædesæt, gourmetkasse</p></div></label>
+          <label class="fc-opt"><input type="radio" name="a-band" value="560">
+            <div class="fc-box"><div class="flex items-start justify-between gap-2">
+              <span class="font-extrabold text-[19px] text-navy-950">560 kr.</span>
+              <svg class="fc-tick shrink-0 mt-1" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1F4568" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+              <p class="mt-1 text-[12.5px] font-semibold text-navy-600">Premium <span class="text-gold-500">· skat-optimeret</span></p>
+              <p class="mt-1.5 text-[13px] text-slatey-500 leading-snug">Mærkevarer: gryder, kaffemaskine, tekstil, elektronik</p></div></label>
+          <label class="fc-opt"><input type="radio" name="a-band" value="800">
+            <div class="fc-box"><div class="flex items-start justify-between gap-2">
+              <span class="font-extrabold text-[19px] text-navy-950">800+ kr.</span>
+              <svg class="fc-tick shrink-0 mt-1" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1F4568" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+              <p class="mt-1 text-[12.5px] font-semibold text-navy-600">Exclusive</p>
+              <p class="mt-1.5 text-[13px] text-slatey-500 leading-snug">Design, oplevelser, større elektronik. Ledelse &amp; jubilæer</p></div></label>
+        </div>
+        <div id="fc-a-band-custom" class="fc-hide mt-4">
+          <label class="fc-lbl" for="fc-a-bandval">Ønsket gaveværdi pr. person (ex. moms)</label>
+          <div class="relative max-w-[220px]">
+            <input id="fc-a-bandval" type="number" min="800" step="50" value="800" class="fc-input font-bold pr-12">
+            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-[13px] font-semibold text-slatey-500 pointer-events-none">kr.</span>
+          </div>
+        </div>
+
+        <div id="fc-tax-live" class="fc-hide mt-6 rounded-xl border border-slatey-200 bg-slatey-50 p-5"></div>
+        <div class="mt-5" data-kb="band"></div>
+      </div>
+
+      <!-- A3: Løsning + levering -->
+      <div class="bg-white rounded-2xl border border-slatey-200 shadow-card p-6 sm:p-7">
+        <div class="flex items-baseline gap-3">
+          <span class="text-[11px] font-black text-navy-400">04</span>
+          <h3 class="text-[17px] font-bold text-navy-950">Hvordan skal gaven leveres?</h3>
+        </div>
+
+        <p class="fc-lbl mt-5">Gaveløsning</p>
+        <div class="grid sm:grid-cols-2 gap-3" data-field="solution">
+          <label class="fc-opt"><input type="radio" name="a-solution" value="fast" checked>
+            <div class="fc-box"><div class="flex items-start justify-between gap-2">
+              <span class="font-bold text-[15px] text-navy-950">Kurateret fast gave</span>
+              <svg class="fc-tick shrink-0" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1F4568" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+              <p class="mt-1.5 text-[13px] text-slatey-500 leading-snug">Én gave til alle. Laveste stykpris, hurtigste proces.</p></div></label>
+          <label class="fc-opt"><input type="radio" name="a-solution" value="portal">
+            <div class="fc-box"><div class="flex items-start justify-between gap-2">
+              <span class="font-bold text-[15px] text-navy-950">Vælg-selv portal</span>
+              <svg class="fc-tick shrink-0" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1F4568" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+              <p class="mt-1.5 text-[13px] text-slatey-500 leading-snug">Modtageren vælger selv i et lukket, kurateret udvalg.</p></div></label>
+        </div>
+        <div class="mt-5" data-kb="solution"></div>
+
+        <p class="fc-lbl mt-7">Levering</p>
+        <div class="grid sm:grid-cols-2 gap-3" data-field="delivery">
+          <label class="fc-opt"><input type="radio" name="a-delivery" value="samlet" checked>
+            <div class="fc-box"><div class="flex items-start justify-between gap-2">
+              <span class="font-bold text-[15px] text-navy-950">Samlet til én adresse</span>
+              <svg class="fc-tick shrink-0" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1F4568" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+              <p class="mt-1.5 text-[13px] text-slatey-500 leading-snug">Paller/kasser til jeres lager eller kontor.</p></div></label>
+          <label class="fc-opt"><input type="radio" name="a-delivery" value="hjem">
+            <div class="fc-box"><div class="flex items-start justify-between gap-2">
+              <span class="font-bold text-[15px] text-navy-950">Direkte til hjemmeadresser</span>
+              <svg class="fc-tick shrink-0" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1F4568" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+              <p class="mt-1.5 text-[13px] text-slatey-500 leading-snug">Individuel pluk/pak &amp; forsendelse pr. modtager.</p></div></label>
+        </div>
+
+        <label class="fc-opt mt-4 block">
+          <input type="checkbox" id="fc-a-branding">
+          <div class="fc-box flex items-start gap-3">
+            <span class="mt-0.5 w-[18px] h-[18px] rounded border-[1.5px] border-slatey-300 grid place-items-center shrink-0">
+              <svg class="fc-tick" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1F4568" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            </span>
+            <span><span class="font-bold text-[15px] text-navy-950">Tilføj branding af emballagen</span>
+            <p class="mt-1 text-[13px] text-slatey-500 leading-snug">Logo-sleeve på gaveæsken + personligt kort med hilsen fra ledelsen.</p></span>
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <!-- ---------- SPOR B: TEKSTIL ---------- -->
+    <div id="fc-form-B" class="fc-hide mt-8 space-y-7">
+
+      <!-- B1: Anvendelse -->
+      <div class="bg-white rounded-2xl border border-slatey-200 shadow-card p-6 sm:p-7">
+        <div class="flex items-baseline gap-3">
+          <span class="text-[11px] font-black text-navy-400">01</span>
+          <h3 class="text-[17px] font-bold text-navy-950">Hvor skal tøjet bruges?</h3>
+        </div>
+        <div class="mt-5 grid sm:grid-cols-3 gap-3" data-field="use">
+          <label class="fc-opt"><input type="radio" name="b-use" value="haandvaerk">
+            <div class="fc-box"><div class="flex items-start justify-between gap-2">
+              <span class="font-bold text-[15px] text-navy-950">Håndværk &amp; produktion</span>
+              <svg class="fc-tick shrink-0" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1F4568" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+              <p class="mt-1.5 text-[13px] text-slatey-500 leading-snug">Hårdt slid, industrivask, ude i alt vejr</p></div></label>
+          <label class="fc-opt"><input type="radio" name="b-use" value="kontor">
+            <div class="fc-box"><div class="flex items-start justify-between gap-2">
+              <span class="font-bold text-[15px] text-navy-950">Kontor &amp; kundekontakt</span>
+              <svg class="fc-tick shrink-0" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1F4568" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+              <p class="mt-1.5 text-[13px] text-slatey-500 leading-snug">Repræsentativt look, komfort, ESG-dokumentation</p></div></label>
+          <label class="fc-opt"><input type="radio" name="b-use" value="messe">
+            <div class="fc-box"><div class="flex items-start justify-between gap-2">
+              <span class="font-bold text-[15px] text-navy-950">Messe &amp; giveaways</span>
+              <svg class="fc-tick shrink-0" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1F4568" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+              <p class="mt-1.5 text-[13px] text-slatey-500 leading-snug">Volumen, synlighed og lav stykpris</p></div></label>
+        </div>
+        <div class="mt-5" data-kb="use"></div>
+      </div>
+
+      <!-- B2: Produkt + kvalitet -->
+      <div id="fc-b-product-card" class="fc-hide bg-white rounded-2xl border border-slatey-200 shadow-card p-6 sm:p-7">
+        <div class="flex items-baseline gap-3">
+          <span class="text-[11px] font-black text-navy-400">02</span>
+          <h3 class="text-[17px] font-bold text-navy-950">Vælg produkt</h3>
+        </div>
+        <div id="fc-b-products" class="mt-5 grid sm:grid-cols-2 lg:grid-cols-4 gap-3" data-field="product"></div>
+
+        <div class="mt-8 flex items-baseline gap-3">
+          <span class="text-[11px] font-black text-navy-400">03</span>
+          <h3 class="text-[17px] font-bold text-navy-950">Kvalitetsniveau</h3>
+        </div>
+        <div class="mt-5 grid sm:grid-cols-3 gap-3" data-field="quality">
+          <label class="fc-opt"><input type="radio" name="b-quality" value="basis">
+            <div class="fc-box"><div class="flex items-start justify-between gap-2">
+              <span class="font-bold text-[15px] text-navy-950">Basis</span>
+              <svg class="fc-tick shrink-0" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1F4568" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+              <p class="mt-1.5 text-[13px] text-slatey-500 leading-snug">Prisfokus. Fin til korte kampagner og giveaways.</p></div></label>
+          <label class="fc-opt"><input type="radio" name="b-quality" value="premium">
+            <div class="fc-box"><div class="flex items-start justify-between gap-2">
+              <span class="font-bold text-[15px] text-navy-950">Premium</span>
+              <svg class="fc-tick shrink-0" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1F4568" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+              <p class="mt-1.5 text-[13px] text-slatey-500 leading-snug">Mærkevare, EU-lager, høj farveægthed &amp; efterkøb.</p></div></label>
+          <label class="fc-opt"><input type="radio" name="b-quality" value="gots">
+            <div class="fc-box"><div class="flex items-start justify-between gap-2">
+              <span class="font-bold text-[15px] text-navy-950">Økologisk / GOTS</span>
+              <svg class="fc-tick shrink-0" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1F4568" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+              <p class="mt-1.5 text-[13px] text-slatey-500 leading-snug">Certificeret bomuld/genanvendt polyester. CSRD-klar.</p></div></label>
+        </div>
+        <div class="mt-5" data-kb="quality"></div>
+      </div>
+
+      <!-- B3: Forædling -->
+      <div id="fc-b-deco-card" class="fc-hide bg-white rounded-2xl border border-slatey-200 shadow-card p-6 sm:p-7">
+        <div class="flex items-baseline gap-3">
+          <span class="text-[11px] font-black text-navy-400">04</span>
+          <h3 class="text-[17px] font-bold text-navy-950">Forædlingsmetode</h3>
+        </div>
+        <div class="mt-5 grid sm:grid-cols-3 gap-3" data-field="method">
+          <label class="fc-opt"><input type="radio" name="b-method" value="transfer">
+            <div class="fc-box"><div class="flex items-start justify-between gap-2">
+              <span class="font-bold text-[15px] text-navy-950">Transfertryk</span>
+              <svg class="fc-tick shrink-0" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1F4568" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+              <p class="mt-1.5 text-[13px] text-slatey-500 leading-snug">Ingen opstart · fotorealistisk · små oplag</p></div></label>
+          <label class="fc-opt"><input type="radio" name="b-method" value="silke">
+            <div class="fc-box"><div class="flex items-start justify-between gap-2">
+              <span class="font-bold text-[15px] text-navy-950">Silketryk</span>
+              <svg class="fc-tick shrink-0" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1F4568" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+              <p class="mt-1.5 text-[13px] text-slatey-500 leading-snug">Opstart pr. farve · billigst i store oplag</p></div></label>
+          <label class="fc-opt"><input type="radio" name="b-method" value="broderi">
+            <div class="fc-box"><div class="flex items-start justify-between gap-2">
+              <span class="font-bold text-[15px] text-navy-950">Broderi</span>
+              <svg class="fc-tick shrink-0" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1F4568" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+              <p class="mt-1.5 text-[13px] text-slatey-500 leading-snug">Eksklusivt look · slidstærkt · polo &amp; jakke</p></div></label>
+        </div>
+        <div class="mt-5" data-kb="method"></div>
+
+        <div class="mt-7 grid sm:grid-cols-2 gap-6">
+          <div>
+            <label class="fc-lbl" for="fc-b-placements">Antal placeringer (fx bryst + ryg)</label>
+            <select id="fc-b-placements" class="fc-input">
+              <option value="1">1 placering</option>
+              <option value="2">2 placeringer</option>
+              <option value="3">3 placeringer</option>
+            </select>
+          </div>
+          <div id="fc-b-colors-wrap" class="fc-hide">
+            <label class="fc-lbl" for="fc-b-colors">Antal farver i logoet</label>
+            <select id="fc-b-colors" class="fc-input">
+              <option value="1">1 farve</option>
+              <option value="2">2 farver</option>
+              <option value="3">3 farver</option>
+              <option value="4">4 farver</option>
+            </select>
+            <p class="mt-2 text-[12.5px] text-slatey-500">Hver farve kræver sin egen ramme — det er her opstartsprisen ligger.</p>
+          </div>
+        </div>
+        <div id="fc-b-warn" class="fc-hide mt-5"></div>
+      </div>
+
+      <!-- B4: Antal -->
+      <div id="fc-b-qty-card" class="fc-hide bg-white rounded-2xl border border-slatey-200 shadow-card p-6 sm:p-7">
+        <div class="flex items-baseline gap-3">
+          <span class="text-[11px] font-black text-navy-400">05</span>
+          <h3 class="text-[17px] font-bold text-navy-950">Hvor mange enheder?</h3>
+        </div>
+        <div class="mt-5 flex flex-wrap items-center gap-3">
+          <div class="relative">
+            <input id="fc-b-qty" type="number" min="1" max="100000" value="100" class="fc-input !w-[150px] font-bold text-[17px] pr-14" aria-label="Antal enheder">
+            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-[13px] font-semibold text-slatey-500 pointer-events-none">stk.</span>
+          </div>
+          <div class="flex flex-wrap gap-2" data-qtychips="fc-b-qty">
+            <button type="button" class="fc-chip" data-v="25">25</button>
+            <button type="button" class="fc-chip" data-v="50">50</button>
+            <button type="button" class="fc-chip" data-v="100">100</button>
+            <button type="button" class="fc-chip" data-v="250">250</button>
+            <button type="button" class="fc-chip" data-v="500">500</button>
+          </div>
+        </div>
+        <p class="mt-4 text-[13px] text-slatey-500 leading-relaxed">Antallet påvirker både stykpris på varen og fordelingen af engangsomkostninger til opstart.</p>
+      </div>
+    </div>
+
+    <!-- CTA + sticky live-pris -->
+    <div class="mt-8">
+      <button id="fc-to-price" class="w-full sm:w-auto bg-navy-950 hover:bg-navy-800 disabled:bg-slatey-300 disabled:cursor-not-allowed text-white font-bold text-[15px] px-8 py-4 rounded-xl transition-colors inline-flex items-center justify-center gap-2.5 shadow-card" disabled>
+        Vis min pris
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </button>
+      <p id="fc-to-price-hint" class="mt-3 text-[13px] text-slatey-500">Udfyld felterne ovenfor for at låse prisen op.</p>
+    </div>
+
+    <div id="fc-sticky" class="fc-off mt-8 -mx-5 sm:-mx-8">
+      <div class="bg-navy-950 text-white px-5 sm:px-8 py-4 sm:rounded-t-2xl border-t-2 border-gold-500">
+        <div class="max-w-6xl mx-auto flex items-center justify-between gap-4 flex-wrap">
+          <div>
+            <p class="text-[11px] font-bold tracking-[.14em] uppercase text-navy-300">Løbende estimat</p>
+            <p class="mt-1 text-[15px] font-semibold text-navy-100">
+              <span id="fc-sticky-unit" class="text-white font-extrabold text-[20px]">–</span>
+              <span class="text-navy-300 text-[13px]"> / stk. ex. moms</span>
+              <span class="text-navy-400 mx-2 hidden sm:inline">|</span>
+              <span class="block sm:inline text-[13px] text-navy-300">Total <span id="fc-sticky-total" class="text-white font-bold">–</span></span>
+            </p>
+          </div>
+          <button id="fc-sticky-cta" class="bg-gold-500 hover:bg-gold-400 text-navy-950 font-bold text-[14px] px-6 py-3 rounded-lg transition-colors shrink-0">
+            Se fuld prisberegning
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= TRIN 3 + 4: PRIS OG LEAD ======================= -->
+  <section id="fc-s3" class="fc-hide">
+    <button class="fc-back mb-6 text-[13px] font-semibold text-slatey-500 hover:text-navy-800 transition inline-flex items-center gap-1.5" data-to="2">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+      Justér konfigurationen
+    </button>
+
+    <p class="text-[11px] font-bold tracking-[.16em] uppercase text-navy-600">Trin 3 af 4 — åben pris</p>
+    <h2 class="mt-2 text-[26px] sm:text-[32px] font-extrabold tracking-tight text-navy-950">Her er din pris.<span class="text-slatey-500 font-bold"> Ingen e-mail påkrævet.</span></h2>
+
+    <!-- PRISKORT -->
+    <div class="mt-7 bg-navy-950 text-white rounded-2xl overflow-hidden shadow-card">
+      <div class="p-6 sm:p-9">
+        <p id="fc-price-config" class="text-[13px] text-navy-300 leading-relaxed"></p>
+
+        <div class="mt-6 grid sm:grid-cols-2 gap-6 sm:gap-8">
+          <div class="bg-white/5 rounded-xl p-5 border border-white/10">
+            <p class="text-[11px] font-bold tracking-[.14em] uppercase text-navy-300">Stykpris ex. moms</p>
+            <p class="mt-2"><span id="fc-price-unit" class="text-[38px] sm:text-[44px] font-extrabold tracking-tight leading-none text-gold-500">–</span></p>
+            <p class="mt-2 text-[13px] text-navy-300">Alt inkluderet: vare, forædling/emballage, opstart og logistik.</p>
+          </div>
+          <div class="bg-white/5 rounded-xl p-5 border border-white/10">
+            <p class="text-[11px] font-bold tracking-[.14em] uppercase text-navy-300">Totalpris ex. moms</p>
+            <p class="mt-2"><span id="fc-price-total" class="text-[38px] sm:text-[44px] font-extrabold tracking-tight leading-none text-white">–</span></p>
+            <p id="fc-price-vat" class="mt-2 text-[13px] text-navy-300"></p>
+          </div>
+        </div>
+
+        <!-- Specifikation -->
+        <div class="mt-7">
+          <p class="text-[11px] font-bold tracking-[.14em] uppercase text-navy-300 mb-2">Sådan er prisen sammensat</p>
+          <div class="rounded-xl border border-white/10 overflow-hidden">
+            <table class="fc-tbl w-full text-left">
+              <tbody id="fc-price-rows" class="text-navy-100"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="fc-price-notes" class="mt-6 space-y-3"></div>
+      </div>
+
+      <div class="bg-white/[.04] border-t border-white/10 px-6 sm:px-9 py-4">
+        <p class="text-[12.5px] text-navy-300 leading-relaxed">
+          Prisen er et <strong class="text-white font-semibold">markedsrealistisk estimat</strong> baseret på dine valg og gældende
+          indkøbspriser. Endelig pris fastlægges ved konkret produktvalg, logo-materiale og leveringstid — typisk ±8 %.
+        </p>
+      </div>
+    </div>
+
+    <!-- METODE-SAMMENLIGNING (kun spor B) -->
+    <div id="fc-compare" class="fc-hide mt-7 bg-white rounded-2xl border border-slatey-200 shadow-card p-6 sm:p-7">
+      <h3 class="text-[17px] font-bold text-navy-950">Hvad ville de andre metoder koste?</h3>
+      <p class="mt-1.5 text-[14px] text-slatey-700">Samme produkt, samme antal — kun forædlingen er skiftet. Så kan du selv se, hvor break-even ligger.</p>
+      <div class="mt-5 overflow-x-auto">
+        <table class="w-full text-left border-collapse min-w-[520px]">
+          <thead>
+            <tr class="text-[11px] font-bold tracking-[.1em] uppercase text-slatey-500">
+              <th class="pb-3 pr-4">Metode</th>
+              <th class="pb-3 pr-4">Opstart (engangs)</th>
+              <th class="pb-3 pr-4">Forædling pr. stk.</th>
+              <th class="pb-3">Stykpris i alt</th>
+            </tr>
+          </thead>
+          <tbody id="fc-compare-rows" class="text-[14px]"></tbody>
+        </table>
+      </div>
+      <p id="fc-compare-tip" class="mt-5 text-[13.5px]"></p>
+    </div>
+
+    <!-- ================= TRIN 4: LEAD-FORMULAR ================= -->
+    <div id="fc-lead" class="mt-7 bg-white rounded-2xl border-[1.5px] border-navy-700 shadow-card overflow-hidden">
+      <div class="bg-navy-100 px-6 sm:px-9 py-3 border-b border-navy-300/40">
+        <p class="text-[11px] font-bold tracking-[.16em] uppercase text-navy-700">Trin 4 af 4 — næste skridt</p>
+      </div>
+      <div class="p-6 sm:p-9">
+        <h3 id="fc-lead-title" class="text-[22px] sm:text-[26px] font-extrabold tracking-tight text-navy-950 leading-snug"></h3>
+        <p id="fc-lead-sub" class="mt-3 text-[15px] text-slatey-700 leading-relaxed max-w-2xl"></p>
+        <ul id="fc-lead-bullets" class="mt-5 grid sm:grid-cols-2 gap-x-8 gap-y-2.5 max-w-2xl"></ul>
+
+        <form id="fc-form" class="mt-7 max-w-2xl" novalidate>
+          <div class="grid sm:grid-cols-2 gap-4">
+            <div>
+              <label class="fc-lbl" for="fc-company">Firmanavn <span class="text-red-500">*</span></label>
+              <input id="fc-company" name="company" type="text" class="fc-input" placeholder="Freeconcept ApS" autocomplete="organization">
+              <p class="fc-msg mt-1.5 text-[12.5px] text-red-600 fc-hide"></p>
+            </div>
+            <div>
+              <label class="fc-lbl" for="fc-name">Dit navn</label>
+              <input id="fc-name" name="name" type="text" class="fc-input" placeholder="Fornavn Efternavn" autocomplete="name">
+            </div>
+            <div>
+              <label class="fc-lbl" for="fc-email">Arbejds-e-mail <span class="text-red-500">*</span></label>
+              <input id="fc-email" name="email" type="email" class="fc-input" placeholder="navn@firma.dk" autocomplete="email" inputmode="email">
+              <p class="fc-msg mt-1.5 text-[12.5px] text-red-600 fc-hide"></p>
+            </div>
+            <div>
+              <label class="fc-lbl" for="fc-phone">Telefon <span class="text-red-500">*</span></label>
+              <input id="fc-phone" name="phone" type="tel" class="fc-input" placeholder="+45 12 34 56 78" autocomplete="tel" inputmode="tel">
+              <p class="fc-msg mt-1.5 text-[12.5px] text-red-600 fc-hide"></p>
+            </div>
+          </div>
+
+          <!-- Logo-upload (kun spor B) -->
+          <div id="fc-upload-wrap" class="fc-hide mt-4">
+            <label class="fc-lbl" for="fc-logo">Logo til 3D-mockup <span class="font-normal text-slatey-500">(valgfrit — AI, EPS, PDF, SVG eller PNG, maks. 10 MB)</span></label>
+            <label for="fc-logo" class="block border-[1.5px] border-dashed border-slatey-300 hover:border-navy-500 hover:bg-slatey-50 rounded-xl px-5 py-6 text-center cursor-pointer transition">
+              <svg class="mx-auto text-navy-500" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v13"/></svg>
+              <span id="fc-logo-label" class="mt-2.5 block text-[14px] font-semibold text-navy-800">Vælg fil eller træk den hertil</span>
+              <span class="mt-1 block text-[12.5px] text-slatey-500">Vektorfil giver den skarpeste mockup — men et PNG er fint til at komme i gang.</span>
+            </label>
+            <input id="fc-logo" name="logo" type="file" class="fc-hide" accept=".ai,.eps,.pdf,.svg,.png,.jpg,.jpeg">
+            <p class="fc-msg mt-1.5 text-[12.5px] text-red-600 fc-hide"></p>
+          </div>
+
+          <div class="mt-4">
+            <label class="fc-lbl" for="fc-note">Kommentar <span class="font-normal text-slatey-500">(valgfrit)</span></label>
+            <textarea id="fc-note" name="note" rows="2" class="fc-input resize-y" placeholder="Fx ønsket leveringsdato, farver eller særlige krav"></textarea>
+          </div>
+
+          <label class="flex items-start gap-3 mt-5 cursor-pointer">
+            <input id="fc-consent" type="checkbox" class="mt-1 w-[17px] h-[17px] accent-navy-800 shrink-0">
+            <span class="text-[13px] text-slatey-700 leading-relaxed">
+              Ja tak — send mig materialet, og kontakt mig om denne forespørgsel. Mine oplysninger behandles fortroligt
+              efter Freeconcepts privatlivspolitik og videregives ikke til tredjepart. <span class="text-red-500">*</span>
+            </span>
+          </label>
+          <p id="fc-consent-msg" class="fc-msg mt-1.5 text-[12.5px] text-red-600 fc-hide"></p>
+
+          <!-- Skjulte felter: hele konfigurationen følger med leadet -->
+          <input type="hidden" name="fc_track" id="fc-h-track">
+          <input type="hidden" name="fc_config" id="fc-h-config">
+          <input type="hidden" name="fc_unit_price" id="fc-h-unit">
+          <input type="hidden" name="fc_total_price" id="fc-h-total">
+          <input type="hidden" name="fc_quantity" id="fc-h-qty">
+          <input type="hidden" name="fc_source" value="Prisberegner (web)">
+
+          <button type="submit" id="fc-submit" class="mt-7 w-full sm:w-auto bg-gold-500 hover:bg-gold-400 text-navy-950 font-extrabold text-[15.5px] px-9 py-4 rounded-xl transition-colors inline-flex items-center justify-center gap-2.5 shadow-card">
+            <span id="fc-submit-label">Send mig materialet</span>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </button>
+          <p class="mt-3 text-[12.5px] text-slatey-500">Svar fra en rådgiver inden for 1 hverdag. Ingen automatiske nyhedsbreve.</p>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= KVITTERING ======================= -->
+  <section id="fc-s4" class="fc-hide">
+    <div class="bg-white rounded-2xl border border-slatey-200 shadow-card p-8 sm:p-12 text-center max-w-2xl mx-auto">
+      <div class="w-16 h-16 rounded-full bg-navy-100 grid place-items-center mx-auto">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#1F4568" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+      </div>
+      <h2 class="mt-6 text-[26px] sm:text-[30px] font-extrabold tracking-tight text-navy-950">Tak — det er sendt.</h2>
+      <p id="fc-done-text" class="mt-3 text-[15px] text-slatey-700 leading-relaxed"></p>
+      <div class="mt-7 rounded-xl bg-slatey-50 border border-slatey-200 p-5 text-left">
+        <p class="text-[11px] font-bold tracking-[.14em] uppercase text-slatey-500">Din beregning</p>
+        <p id="fc-done-summary" class="mt-2 text-[14px] text-navy-900 leading-relaxed font-medium"></p>
+      </div>
+      <button id="fc-again" class="mt-7 text-[14px] font-bold text-navy-700 hover:text-navy-950 transition">Lav en ny beregning</button>
+    </div>
+  </section>
+
+  </main>
+
+  <footer class="border-t border-slatey-200 mt-6">
+    <div class="max-w-6xl mx-auto px-5 sm:px-8 py-7 text-[12.5px] text-slatey-500 leading-relaxed">
+      Alle priser er vejledende og ex. moms. Skatteoplysninger er generel information for indkomståret 2026 og
+      erstatter ikke rådgivning fra din revisor. © <span id="fc-year"></span> Freeconcept.
+    </div>
+  </footer>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* ============================================================
+   1) KONFIGURATION — tilpas disse to blokke til jeres setup
+   ============================================================ */
+
+const FC_CONFIG = {
+  // Sæt jeres endpoint her (Formspree, HubSpot, WP admin-ajax, eget API).
+  // Er den tom, kører modulet i demo-tilstand og logger leadet i konsollen.
+  endpoint: '',
+  vatRate: 0.25
+};
+
+const FC_PRICING = {
+  gifts: {
+    packaging:   [[1,49],[25,42],[50,36],[100,30],[250,24],[500,19]],  // gaveæske + pakning pr. stk.
+    handling:    { fast: 14, portal: 32 },                             // administration pr. modtager
+    portalSetup: 4500, portalSetupFreeFrom: 150,                       // opsætning af vælg-selv portal
+    delivery:    { samlet:{ per:8, min:450 }, hjem:{ per:72, min:0 } },
+    branding:    { setup:1800, per:11 }                                // logo-sleeve + personligt kort
+  },
+  textile: {
+    qtyDiscount: [[1,0],[25,.03],[50,.06],[100,.09],[250,.13],[500,.17]],
+    deco: {
+      transfer: { setupPerPlacement:0,   perUnit:[[1,32],[25,29],[50,26],[100,23],[250,20],[500,18]] },
+      broderi:  { setupPerPlacement:545, perUnit:[[1,42],[25,38],[50,34],[100,30],[250,27],[500,24]] },
+      silke:    { setupPerColorPlacement:650, base:3.0, perColor:1.6,
+                  factor:[[1,1.6],[25,1.35],[50,1.15],[100,1.0],[250,.85],[500,.75]] }
+    }
+  },
+  tax2026: { julegave: 900, bagatel: 1300, reklameartikel: 100, jubilaeumsgratiale: 8000 }
+};
+
+const FC_PRODUCTS = {
+  haandvaerk: [
+    { id:'tshirt',    name:'T-shirt, 65/35',        spec:'200 g/m² · tåler 60° industrivask', p:{basis:42, premium:78, gots:69} },
+    { id:'polo',      name:'Polo, 65/35 piqué',     spec:'220 g/m² · formstabil krave',       p:{basis:79, premium:139, gots:129} },
+    { id:'hoodie',    name:'Hoodie',                spec:'300 g/m² · børstet inderside',      p:{basis:129, premium:219, gots:239} },
+    { id:'softshell', name:'Softshell arbejdsjakke',spec:'vind- og vandafvisende, 3-lags',    p:{basis:249, premium:429, gots:469} }
+  ],
+  kontor: [
+    { id:'polo',      name:'Polo, ringspundet',     spec:'210 g/m² · blødt piqué',            p:{basis:89, premium:165, gots:149} },
+    { id:'skjorte',   name:'Business skjorte',      spec:'poplin · easy-care',                p:{basis:179, premium:289, gots:269} },
+    { id:'sweat',     name:'Crewneck sweatshirt',   spec:'280 g/m² · rund hals',              p:{basis:119, premium:199, gots:189} },
+    { id:'softshell', name:'Softshell jakke',       spec:'let, kontorvenlig pasform',         p:{basis:269, premium:449, gots:489} }
+  ],
+  messe: [
+    { id:'tshirt',    name:'T-shirt, let',          spec:'150–180 g/m² · mange farver',       p:{basis:26, premium:52, gots:45} },
+    { id:'kasket',    name:'5-panel kasket',        spec:'bomuldstwill · justerbar',          p:{basis:34, premium:68, gots:62} },
+    { id:'tote',      name:'Mulepose / tote bag',   spec:'140 g/m² bomuld · lange hanke',     p:{basis:19, premium:39, gots:35} },
+    { id:'hoodie',    name:'Hoodie, let',           spec:'280 g/m² · unisex',                 p:{basis:109, premium:189, gots:205} }
+  ]
+};
+
+/* ============================================================
+   2) EKSPERT-VIDEN — indholdet i de gule videnbokse
+   ============================================================ */
+
+const KB = {
+  occasion: {
+    jul: {t:'SKATs julegaveregler 2026 — den vigtigste grænse i hele processen', h:`
+      <p>Der er <strong>to grænser i spil samtidig</strong>, og de fleste indkøbere blander dem sammen:</p>
+      <ul>
+        <li><strong>Bagatelgrænsen: 1.300 kr. inkl. moms pr. år.</strong> Det er summen af <em>alle</em> mindre personalegoder, medarbejderen modtager i løbet af året.</li>
+        <li><strong>Julegavegrænsen: 900 kr. inkl. moms.</strong> Holder julegaven sig under den, er den <strong>altid skattefri</strong> — også selvom årets samlede goder overstiger 1.300 kr.</li>
+      </ul>
+      <p>Rammer julegaven derimod 901 kr., bliver <strong>hele gavens værdi</strong> skattepligtig for medarbejderen — ikke kun de overskydende kroner. Derfor lander erfarne indkøbere typisk på 560 kr. ex. moms (= 700 kr. inkl.): pæn margin til grænsen, og plads til en sommergave senere på året inden for bagatelgrænsen.</p>
+      <p><strong>Vigtigt om værdien:</strong> det er gavens <em>markedsværdi inkl. moms</em>, der tæller — ikke jeres indkøbspris. Køber I ind til 400 kr., men varen sælges til 950 kr. i detailhandlen, er det de 950 kr., SKAT ser på.</p>`},
+    jubi: {t:'Jubilæum kører efter helt egne — og langt mere gunstige — regler', h:`
+      <p>Et jubilæum er ikke et personalegode. Ved <strong>medarbejderens 25, 35, 40, 45 eller 50 års ansættelse</strong> — eller ved virksomhedens eget jubilæum i multipla af 25 år — kan der udbetales et <strong>jubilæumsgratiale på op til 8.000 kr. skattefrit</strong> (ud over et bundfradrag på 8.000 kr. skal der kun betales skat af det overskydende).</p>
+      <ul>
+        <li>Ved virksomhedsjubilæum skal <strong>alle medarbejdere</strong> tilgodeses efter samme kriterier — ellers falder skattefriheden bort.</li>
+        <li>Er der tale om et &quot;uofficielt&quot; jubilæum (fx 10 eller 20 år), gælder de almindelige personalegoderegler og bagatelgrænsen på 1.300 kr. igen.</li>
+        <li>Gaven skal være et <strong>ting-gode</strong>. Kontanter og frit omsættelige gavekort beskattes altid som løn.</li>
+      </ul>
+      <p>Netop derfor er jubilæum det ene sted, hvor det giver mening at gå op i 800+ kr.-båndet.</p>`},
+    kunde: {t:'Kundegaver: grænsen mellem reklameartikel og repræsentation går ved 100 kr.', h:`
+      <p>Her handler det ikke om modtagerens skat, men om <strong>jeres eget fradrag</strong>:</p>
+      <ul>
+        <li><strong>Reklameartikel — under 100 kr. ex. moms:</strong> forsynet med logo/firmanavn og fremstillet i et større antal til ubestemt kreds. Giver <strong>fuldt skattefradrag og fuldt momsfradrag</strong>.</li>
+        <li><strong>Repræsentation — over 100 kr. ex. moms:</strong> kun <strong>25 % skattefradrag</strong> og <strong>intet momsfradrag</strong>. En kundegave til 500 kr. koster jer altså reelt væsentligt mere end fakturaen viser.</li>
+      </ul>
+      <p>Konsekvensen for jeres budget: mange virksomheder deler indsatsen op — en logo-branded reklameartikel til den brede kundeliste, og et mindre antal reelle relationsgaver til de nøglekunder, hvor effekten kan mærkes på bundlinjen.</p>`}
+  },
+  band: {t:'Sådan tænker vi budget-bånd', h:`
+    <p>Båndene er ikke tilfældige. De er lagt, hvor <strong>indkøbsprisen ex. moms rammer de skattemæssige grænser inkl. moms</strong>, og hvor produktkvaliteten reelt skifter niveau:</p>
+    <ul>
+      <li><strong>225 kr.</strong> (281 inkl.) — god margin til bagatelgrænsen, hvis I også giver andre goder i løbet af året.</li>
+      <li><strong>400 kr.</strong> (500 inkl.) — det klassiske julegavebudget. Bredt mærkevareudvalg, sikker afstand til 900-grænsen.</li>
+      <li><strong>560 kr.</strong> (700 inkl.) — sweet spot. Maksimal oplevet værdi med sikkerhedsmargin til julegavegrænsen.</li>
+      <li><strong>800+ kr.</strong> (1.000+ inkl.) — over julegavegrænsen. Brug båndet til jubilæer, ledelse og sælgerkonkurrencer, hvor beskatningen er aftalt på forhånd.</li>
+    </ul>`},
+  solution: {
+    fast: {t:'Kurateret fast gave — laveste stykpris', h:`
+      <p>Én gave til alle giver den bedste indkøbspris: vi køber ind i ét parti, pakker i én arbejdsgang og undgår portal- og returomkostninger. Til gengæld rammer I ikke alle personlige præferencer lige godt.</p>
+      <p>Vores erfaring: fast gave fungerer bedst under 75 medarbejdere, hvor HR kender flokken — og ved gaver, hvor kvaliteten taler for sig selv (køkkenudstyr, tekstil, værktøj).</p>`},
+    portal: {t:'Vælg-selv portal — og hvorfor et almindeligt gavekort er en skattefælde', h:`
+      <p>Modtageren logger ind og vælger mellem et <strong>lukket, forudvalgt udvalg</strong>, som I har godkendt. Det giver høj tilfredshed, korrekte størrelser og færre returneringer.</p>
+      <p><strong>Skattemæssigt er detaljen afgørende:</strong> et gavebevis er kun skattefrit, hvis det giver adgang til et <em>begrænset, på forhånd defineret udvalg af naturalier</em> — og ikke kan veksles til kontanter, deles op i flere køb eller bruges frit i en webshop. Et almindeligt gavekort til en butikskæde beskattes som løn, uanset beløbet.</p>
+      <ul>
+        <li>Regn med 5–12 % højere stykpris end en fast gave (portaldrift, individuel pluk/pak, spredt lager).</li>
+        <li>Til gengæld: navnelister, leveringsstatus og genbestilling af ikke-afhentede gaver håndteres automatisk.</li>
+        <li>Opsætningen er gratis fra 150 modtagere.</li>
+      </ul>`}
+  },
+  use: {
+    haandvaerk: {t:'Til håndværk vinder 65/35 poly/bomuld over ren bomuld — hver gang', h:`
+      <p>Det virker kontraintuitivt, men <strong>polyesteren er ikke en spareløsning — den er den funktionelle komponent</strong>:</p>
+      <ul>
+        <li><strong>Formstabilitet:</strong> ren bomuld krymper 5–7 % ved 60° vask. En 65/35-blanding holder pasform og længde vask efter vask — afgørende, når tøjet vaskes industrielt hver uge.</li>
+        <li><strong>Slidstyrke:</strong> polyesterfibrene har markant højere brudstyrke. Det er derfor knæ, albuer og sømme holder 2–3 gange længere.</li>
+        <li><strong>Tørretid &amp; komfort:</strong> bomulden holder på fugten og føles behagelig mod huden, polyesteren transporterer den væk. En ren bomulds-t-shirt bliver våd og kold at arbejde i.</li>
+        <li><strong>Farveægthed:</strong> mindre falmning ved høj temperatur og UV — jeres firmafarve bliver ved med at være jeres firmafarve.</li>
+      </ul>
+      <p>Vægt: 200 g/m² til t-shirts, 220–260 g/m² til polo og 280–300 g/m² til sweat. Under 180 g/m² holder simpelthen ikke til en byggeplads. Skal tøjet bruges ved vej eller på entreprenørplads, skal det desuden opfylde <strong>EN ISO 20471</strong> — den klasse fastlægges af, hvor meget fluorescerende materiale og refleks der er på beklædningen.</p>`},
+    kontor: {t:'Til kontor og kundekontakt er GOTS-økologisk bomuld det rigtige valg', h:`
+      <p>Her er præmisserne omvendt: tøjet vaskes ved 40°, slides ikke og skal først og fremmest <strong>føles og se rigtigt ud</strong>.</p>
+      <ul>
+        <li><strong>Ringspundet, kæmmet økologisk bomuld</strong> har længere, mere ensartede fibre — det giver en glattere overflade, blødere håndtering og markant mindre &quot;fnug&quot; (pilling) end almindelig carded bomuld.</li>
+        <li><strong>Bedre trykflade:</strong> den glatte overflade er grunden til, at logoet står skarpere. Poly-blandinger kan give farvemigrering, hvor tekstilfarven trænger op i et lyst tryk over tid.</li>
+        <li><strong>Dokumentation:</strong> GOTS dækker hele kæden — fra økologisk dyrkning til farvning uden en lang liste af kemikalier — og indeholder også sociale krav i produktionsleddet. Det er den certificering, jeres bæredygtighedsrapportering og indkøbspolitik faktisk kan referere til.</li>
+      </ul>
+      <p>Går tøjet til kundevendte roller eller salg, er GOTS ikke en merudgift — det er en del af historien, medarbejderen bærer rundt på.</p>`},
+    messe: {t:'Messe og giveaways: styr på gram, farver og leveringstid', h:`
+      <p>Her er logikken en anden: tøjet skal ikke holde i fem år — det skal <strong>ses, uddeles og bæres hjem</strong>.</p>
+      <ul>
+        <li><strong>150–180 g/m²</strong> er standarden. Lettere tekstil = lavere stykpris og lavere fragtvægt, og det er rigeligt til en messe eller et løb.</li>
+        <li><strong>Vælg lager-farver:</strong> en stor del af merprisen på messe-merch kommer fra specialfarver med lang leveringstid. Hold jer til leverandørens lagerførte farver, og I sparer både kroner og to ugers produktion.</li>
+        <li><strong>Størrelsesfordeling:</strong> den klassiske fejl er at bestille jævnt fordelt. Regn med ca. 10 % S, 25 % M, 30 % L, 25 % XL, 10 % XXL — ellers står I tilbage med et lager af S.</li>
+        <li><strong>Tænk fragtvægt ind:</strong> 500 hoodies fylder en palle mere end 500 t-shirts. Det ses på fragtregningen.</li>
+      </ul>`}
+  },
+  quality: {t:'Basis, Premium eller GOTS — hvad skifter reelt?', h:`
+    <ul>
+      <li><strong>Basis:</strong> carded bomuld eller standard poly-blend, typisk asiatisk produktion med længere leveringstid. Fin til engangsbrug og giveaways. Bemærk, at farverne kan variere mellem produktionsbatches — det er et problem, hvis I efterbestiller om et halvt år.</li>
+      <li><strong>Premium:</strong> mærkevare med EU-lager. Højere farveægthed, ensartede batches og — vigtigst i praksis — <strong>garanteret efterkøb</strong>, så nye medarbejdere kan få præcis samme trøje om to år.</li>
+      <li><strong>Økologisk / GOTS:</strong> certificeret bomuld eller GRS-genanvendt polyester med fuld sporbarhed. Merprisen ligger typisk på 15–30 % og er som regel det billigste sted at hente konkret dokumentation til jeres ESG-rapportering.</li>
+    </ul>`},
+  method: {
+    transfer: {t:'Transfertryk — ingen opstart, fuld farvefrihed', h:`
+      <p>Logoet printes på en film og presses ind i stoffet med varme og tryk. Moderne DTF-transfer er langt fra 90&#39;ernes stive plastiktryk.</p>
+      <ul>
+        <li><strong>Ingen opstartsomkostning pr. farve.</strong> Et logo med farveovergange, fotos eller 12 farver koster det samme som ét i én farve.</li>
+        <li><strong>Kan sidde, hvor silketryk ikke kan:</strong> softshell, vindjakker, tasker, kasketter, hen over lynlåse og sømme — alt hvor en flad silketryksramme ikke kan nå ned.</li>
+        <li><strong>Ideelt til arbejdstøj</strong> med navn på hver enkelt medarbejder, og til små oplag hvor opstart ellers ville dominere prisen.</li>
+        <li>Bagsiden: prisen pr. tryk falder kun langsomt med antallet. Ved store oplag i få farver bliver silketryk markant billigere.</li>
+      </ul>`},
+    silke: {t:'Silketryk — dyrt at starte, billigst at gentage', h:`
+      <p>Farven trykkes gennem en ramme direkte ned i stoffet. <strong>Der laves én ramme pr. farve</strong> — og det er hele prislogikken i én sætning.</p>
+      <ul>
+        <li><strong>Opstart pr. farve pr. placering.</strong> Et 3-farvet logo på både bryst og ryg = 6 rammer, der skal laves og indkøres.</li>
+        <li><strong>Derefter er hvert tryk næsten gratis.</strong> Det er derfor break-even typisk ligger omkring 40–75 stk. i én farve — og at silketryk ved 250+ stk. er umuligt at slå på pris.</li>
+        <li><strong>Bedste holdbarhed på jerseystoffer:</strong> farven sidder i stoffet, ikke oven på det. Trykket føles blødere og falmer langsommere end transfer.</li>
+        <li>Egner sig ikke til farveovergange, fotos eller tekniske jakker med foer og membran.</li>
+      </ul>`},
+    broderi: {t:'Broderi — signalerer kvalitet og er praktisk talt uopslideligt', h:`
+      <p>Logoet syes med tråd. Prisen bestemmes ikke af antal farver, men af <strong>antal sting</strong> — typisk 4.000–9.000 sting for et brystlogo.</p>
+      <ul>
+        <li><strong>Engangsomkostning til digitalisering (&quot;punching&quot;):</strong> logoet skal oversættes til en sting-fil af en tekniker. Den fil er jeres og genbruges gratis ved alle senere ordrer.</li>
+        <li><strong>Holder tøjets levetid ud.</strong> Ingen revner, ingen afskalning, tåler industrivask — derfor er broderi standarden på arbejdsjakker og poloer, der bruges dagligt.</li>
+        <li><strong>Bedst på:</strong> polo, skjorte, fleece, softshell, strik, kasket — alt med lidt vægt og struktur i stoffet.</li>
+        <li><strong>Undgå på:</strong> tynde jerseytrøjer under 180 g/m² (broderiet trækker stoffet skævt), og logoer med tekst under ca. 4 mm bogstavhøjde eller meget fine detaljer — de kan simpelthen ikke syes læseligt.</li>
+      </ul>
+      <p>Tommelfingerregel: transfertryk til det store logo på ryggen, broderi til det diskrete 8–10 cm logo på brystet.</p>`}
+  }
+};
+
+/* ============================================================
+   3) HJÆLPEFUNKTIONER
+   ============================================================ */
+
+const $  = (s, r) => (r||document).querySelector(s);
+const $$ = (s, r) => Array.prototype.slice.call((r||document).querySelectorAll(s));
+const nf0 = new Intl.NumberFormat('da-DK', {maximumFractionDigits:0});
+const nf2 = new Intl.NumberFormat('da-DK', {minimumFractionDigits:2, maximumFractionDigits:2});
+const kr  = n => nf0.format(Math.round(n)) + ' kr.';
+const kr2 = n => nf2.format(n) + ' kr.';
+const tier = (tiers, q) => { let v = tiers[0][1]; for (const t of tiers) { if (q >= t[0]) v = t[1]; } return v; };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function kbBox(title, html){
+  return '<div class="fc-kb"><h4>Ekspert-viden</h4>'
+       + '<p class="!mt-1.5 !text-[15px] !font-bold !text-navy-950 !leading-snug">' + title + '</p>'
+       + '<div class="mt-2 space-y-2">' + html + '</div></div>';
+}
+function noteBox(tone, title, html){
+  const map = {
+    info: ['bg-white/5 border-white/15','text-navy-100','#93BFE2'],
+    warn: ['bg-gold-100/10 border-gold-500/40','text-gold-400','#F0BC50']
+  }[tone] || ['bg-white/5 border-white/15','text-navy-100','#93BFE2'];
+  return '<div class="rounded-xl border ' + map[0] + ' p-4 flex gap-3">'
+    + '<svg class="shrink-0 mt-0.5" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="' + map[2] + '" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.4"/></svg>'
+    + '<div><p class="text-[13.5px] font-bold ' + map[1] + '">' + title + '</p>'
+    + '<p class="mt-1 text-[13px] text-navy-200 leading-relaxed">' + html + '</p></div></div>';
+}
+
+/* ============================================================
+   4) TILSTAND
+   ============================================================ */
+
+const S = {
+  track: null,
+  a: { occasion:null, qty:100, band:null, bandCustom:800, solution:'fast', delivery:'samlet', branding:false },
+  b: { use:null, product:null, quality:null, method:null, placements:1, colors:1, qty:100 }
+};
+
+/* ============================================================
+   5) PRISMOTOR
+   ============================================================ */
+
+function bandValue(){
+  return S.a.band === '800' ? Math.max(800, Number(S.a.bandCustom) || 800) : Number(S.a.band);
+}
+
+function calcGifts(){
+  const P = FC_PRICING.gifts, q = Math.max(1, S.a.qty), val = bandValue();
+  const rows = [];
+  const gift = val * q;
+  rows.push({ label:'Gaveværdi', detail:kr(val) + ' × ' + nf0.format(q) + ' stk.', amount:gift });
+
+  const pack = tier(P.packaging, q);
+  rows.push({ label:'Gaveæske, pakning &amp; håndtering', detail:kr(pack) + ' pr. gave', amount:pack * q });
+
+  const hRate = P.handling[S.a.solution];
+  let setup = 0, setupLabel = '';
+  if (S.a.solution === 'portal') {
+    setup = q >= P.portalSetupFreeFrom ? 0 : P.portalSetup;
+    setupLabel = 'Opsætning af vælg-selv portal' + (setup === 0 ? ' <span class="text-gold-500 font-semibold">(gratis fra ' + P.portalSetupFreeFrom + ' modtagere)</span>' : '');
+  }
+  rows.push({ label: S.a.solution === 'portal' ? 'Portaldrift &amp; individuel pluk/pak' : 'Ordrestyring &amp; kvalitetskontrol',
+              detail: kr(hRate) + ' pr. modtager', amount: hRate * q });
+  if (S.a.solution === 'portal') rows.push({ label:setupLabel, detail:'engangsbeløb', amount:setup, once:true });
+
+  const d = P.delivery[S.a.delivery];
+  const ship = Math.max(d.min, d.per * q);
+  rows.push({ label: S.a.delivery === 'samlet' ? 'Fragt, samlet levering' : 'Fragt til individuelle hjemmeadresser',
+              detail: S.a.delivery === 'samlet' ? 'min. ' + kr(d.min) : kr(d.per) + ' pr. forsendelse', amount: ship });
+
+  let brand = 0;
+  if (S.a.branding) {
+    brand = P.branding.setup + P.branding.per * q;
+    rows.push({ label:'Branding: logo-sleeve &amp; personligt kort', detail:'opsætning ' + kr(P.branding.setup) + ' + ' + kr(P.branding.per) + ' pr. stk.', amount:brand });
+  }
+
+  const total = rows.reduce((s, r) => s + r.amount, 0);
+  return { rows, total, unit: total / q, qty:q, giftValue: val };
+}
+
+function decoCost(method, qty, colors, placements){
+  const D = FC_PRICING.textile.deco;
+  if (method === 'silke') {
+    const s = D.silke;
+    return { setup: s.setupPerColorPlacement * colors * placements,
+             perUnit: (s.base + s.perColor * colors) * placements * tier(s.factor, qty) };
+  }
+  const d = D[method];
+  return { setup: d.setupPerPlacement * placements, perUnit: tier(d.perUnit, qty) * placements };
+}
+
+function currentProduct(){
+  const list = FC_PRODUCTS[S.b.use] || [];
+  return list.filter(p => p.id === S.b.product)[0] || null;
+}
+
+function calcTextile(){
+  const prod = currentProduct(); if (!prod) return null;
+  const q = Math.max(1, S.b.qty);
+  const list = prod.p[S.b.quality];
+  const disc = tier(FC_PRICING.textile.qtyDiscount, q);
+  const garment = list * (1 - disc);
+  const deco = decoCost(S.b.method, q, S.b.colors, S.b.placements);
+  const methodName = { transfer:'Transfertryk', silke:'Silketryk', broderi:'Broderi' }[S.b.method];
+
+  const rows = [
+    { label: prod.name + ' — ' + ({basis:'Basis', premium:'Premium', gots:'Økologisk/GOTS'}[S.b.quality]),
+      detail: kr2(list) + ' pr. stk.' + (disc > 0 ? ' ÷ ' + Math.round(disc*100) + ' % mængderabat' : ''),
+      amount: garment * q },
+    { label: methodName + ' · ' + S.b.placements + ' placering' + (S.b.placements > 1 ? 'er' : '')
+             + (S.b.method === 'silke' ? ' · ' + S.b.colors + ' farve' + (S.b.colors > 1 ? 'r' : '') : ''),
+      detail: kr2(deco.perUnit) + ' pr. stk.', amount: deco.perUnit * q }
+  ];
+  if (deco.setup > 0) {
+    rows.push({ label: S.b.method === 'silke'
+                  ? 'Opstart: silketryksrammer &amp; indkøring (' + (S.b.colors * S.b.placements) + ' ramme' + (S.b.colors * S.b.placements > 1 ? 'r' : '') + ')'
+                  : 'Opstart: digitalisering af logo til sting-fil',
+                detail: 'engangsbeløb — genbruges ved efterbestilling', amount: deco.setup, once:true });
+  }
+  const total = rows.reduce((s, r) => s + r.amount, 0);
+  return { rows, total, unit: total / q, qty:q, product:prod, deco, garment, methodName };
+}
+
+function calc(){ return S.track === 'A' ? calcGifts() : calcTextile(); }
+
+function isReady(){
+  if (S.track === 'A') return !!(S.a.occasion && S.a.band && S.a.qty >= 1);
+  if (S.track === 'B') return !!(S.b.use && S.b.product && S.b.quality && S.b.method && S.b.qty >= 1);
+  return false;
+}
+
+/* ============================================================
+   6) SKATTE-STATUS (LIVE, SPOR A)
+   ============================================================ */
+
+function renderTaxLive(){
+  const box = $('#fc-tax-live');
+  if (!S.a.band || !S.a.occasion) { box.classList.add('fc-hide'); return; }
+  const T = FC_PRICING.tax2026, ex = bandValue(), incl = ex * (1 + FC_CONFIG.vatRate);
+  let pill, head, body;
+
+  if (S.a.occasion === 'jul') {
+    if (incl <= T.julegave) {
+      pill = ['fc-pill-ok', 'Skattefri julegave'];
+      head = kr(incl) + ' inkl. moms — under grænsen på ' + kr(T.julegave);
+      body = 'Gaven er skattefri for medarbejderen, uanset om årets øvrige personalegoder overstiger bagatelgrænsen på ' + kr(T.bagatel) + ' Du har ' + kr(T.julegave - incl) + ' i sikkerhedsmargin.';
+    } else {
+      pill = ['fc-pill-no', 'Skattepligtig'];
+      head = kr(incl) + ' inkl. moms — over julegavegrænsen på ' + kr(T.julegave);
+      body = '<strong>Hele gavens værdi</strong> — ikke kun det overskydende beløb — skal medregnes i medarbejderens skattepligtige indkomst. Vil I under grænsen, skal indkøbsprisen ex. moms ned under ' + kr(T.julegave / 1.25);
+    }
+  } else if (S.a.occasion === 'jubi') {
+    if (incl <= T.bagatel) {
+      pill = ['fc-pill-ok', 'Inden for bagatelgrænsen'];
+      head = kr(incl) + ' inkl. moms — under bagatelgrænsen på ' + kr(T.bagatel);
+      body = 'Husk, at grænsen er årlig og dækker <em>alle</em> mindre personalegoder tilsammen. Er der tale om et officielt jubilæum (25/35/40/45/50 år), gælder i stedet reglen om jubilæumsgratiale på op til ' + kr(T.jubilaeumsgratiale) + ' skattefrit.';
+    } else {
+      pill = ['fc-pill-warn', 'Kræver jubilæumsreglen'];
+      head = kr(incl) + ' inkl. moms — over bagatelgrænsen på ' + kr(T.bagatel);
+      body = 'Beløbet er kun skattefrit, hvis der er tale om et <strong>officielt jubilæum</strong> (medarbejderens 25/35/40/45/50 år eller virksomhedens jubilæum i multipla af 25 år). Så kan der gives op til ' + kr(T.jubilaeumsgratiale) + ' skattefrit. Ellers beskattes hele beløbet.';
+    }
+  } else {
+    if (ex <= T.reklameartikel) {
+      pill = ['fc-pill-ok', 'Reklameartikel'];
+      head = kr(ex) + ' ex. moms — under grænsen på ' + kr(T.reklameartikel);
+      body = 'Med logo og i et større antal tæller gaven som reklameudgift: <strong>fuldt skattefradrag og fuldt momsfradrag</strong>.';
+    } else {
+      pill = ['fc-pill-warn', 'Repræsentation'];
+      head = kr(ex) + ' ex. moms — over reklameartikelgrænsen på ' + kr(T.reklameartikel);
+      body = 'Udgiften er repræsentation: <strong>25 % skattefradrag og intet momsfradrag</strong>. Den reelle omkostning efter skat er altså markant højere end fakturabeløbet — regn med det i budgettet.';
+    }
+  }
+
+  box.classList.remove('fc-hide');
+  box.innerHTML = '<div class="flex items-start gap-3 flex-wrap">'
+    + '<span class="fc-pill ' + pill[0] + '">' + pill[1] + '</span>'
+    + '<p class="text-[13.5px] font-bold text-navy-950 flex-1 min-w-[240px]">' + head + '</p></div>'
+    + '<p class="mt-2.5 text-[13.5px] text-slatey-700 leading-relaxed">' + body + '</p>'
+    + '<p class="mt-2.5 text-[12px] text-slatey-500">Vejledende for indkomståret 2026. Kontrollér altid med jeres revisor.</p>';
+}
+
+/* ============================================================
+   7) ADVARSLER / ANBEFALINGER (SPOR B)
+   ============================================================ */
+
+function textileWarning(){
+  const p = currentProduct(); if (!p || !S.b.method) return null;
+  const q = S.b.qty, m = S.b.method;
+  const light = (S.b.use === 'messe' && (p.id === 'tshirt' || p.id === 'tote'));
+
+  if (m === 'broderi' && light)
+    return ['warn', 'Broderi passer dårligt til dette produkt',
+      'Et let tekstil på 150–180 g/m² har ikke krop nok til at bære et broderi — stoffet trækker sig skævt omkring stingene. Vælg <strong>transfertryk</strong> her, eller skift til en polo eller hoodie, hvis broderiet er vigtigt.'];
+  if (m === 'silke' && p.id === 'softshell')
+    return ['warn', 'Silketryk kan ikke lade sig gøre på softshell',
+      'En softshell har membran og foer og kan ikke lægges fladt i en silketryksramme. <strong>Transfertryk</strong> eller <strong>broderi</strong> er de reelle muligheder — broderi er standarden på arbejdsjakker.'];
+  if (m === 'silke' && q < 50)
+    return ['warn', 'Silketryk er sjældent den billigste vej ved ' + q + ' stk.',
+      'Opstarten pr. farve skal fordeles på få enheder. Break-even mod transfertryk ligger typisk omkring 40–75 stk. Se sammenligningen på næste trin — den regner det ud på dine tal.'];
+  if (m === 'transfer' && q >= 250 && S.b.colors <= 2)
+    return ['info', 'Ved ' + q + ' stk. bør I overveje silketryk',
+      'Med et logo i få farver og et oplag i denne størrelse er silketryk normalt billigere pr. stk. — også når opstarten er regnet med. Sammenligningen på næste trin viser forskellen.'];
+  if (m === 'broderi' && S.b.placements > 1)
+    return ['info', 'Digitalisering betales pr. placering',
+      'Hver placering kræver sin egen sting-fil, fordi størrelse og underlag er forskelligt. Filerne er jeres og genbruges gratis ved alle senere ordrer.'];
+  return null;
+}
+
+function warnBox(tone, title, html){
+  const c = tone === 'warn'
+    ? ['border-gold-500 bg-gold-100/60','#9A6F10','text-[#7A5608]']
+    : ['border-navy-500 bg-navy-100/60','#1F4568','text-navy-800'];
+  return '<div class="rounded-xl border-l-4 ' + c[0] + ' p-4 flex gap-3 fc-in">'
+    + '<svg class="shrink-0 mt-0.5" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="' + c[1] + '" stroke-width="2.2" stroke-linecap="round"><path d="M12 9v4M12 17v.01"/><path d="M10.3 3.9 2.4 17.5A2 2 0 0 0 4.1 20.5h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>'
+    + '<div><p class="text-[14px] font-bold ' + c[2] + '">' + title + '</p>'
+    + '<p class="mt-1 text-[13.5px] text-slatey-700 leading-relaxed">' + html + '</p></div></div>';
+}
+
+/* ============================================================
+   8) NAVIGATION & TRIN
+   ============================================================ */
+
+let currentStep = 1;
+
+function setStep(n){
+  currentStep = n;
+  ['#fc-s1','#fc-s2','#fc-s3','#fc-s4'].forEach((sel, i) => {
+    $(sel).classList.toggle('fc-hide', i + 1 !== (n === 5 ? 4 : n));
+  });
+  $$('.fc-step').forEach(el => {
+    const s = Number(el.dataset.step);
+    el.classList.toggle('is-active', s === n || (n === 5 && s === 4));
+    el.classList.toggle('is-done', s < n);
+  });
+  $('#fc-restart').classList.toggle('fc-hide', n === 1);
+  $('#fc-sticky').classList.toggle('fc-off', !(n === 2 && isReady()));
+  if (n === 3) $('#fc-s3').classList.add('fc-in');
+  window.scrollTo({ top:0, behavior:'smooth' });
+}
+
+function markStep4(){
+  $$('.fc-step').forEach(el => {
+    const s = Number(el.dataset.step);
+    el.classList.toggle('is-active', s === 4);
+    el.classList.toggle('is-done', s < 4);
+  });
+}
+
+/* ============================================================
+   9) OPBYGNING AF TRIN 2
+   ============================================================ */
+
+function startTrack(t){
+  S.track = t;
+  $('#fc-form-A').classList.toggle('fc-hide', t !== 'A');
+  $('#fc-form-B').classList.toggle('fc-hide', t !== 'B');
+  if (t === 'A') {
+    $('#fc-s2-title').textContent = 'Firmagaver & julegaver';
+    $('#fc-s2-sub').innerHTML = 'Fire valg — så har du både en pris og et klart svar på, hvordan gaven står skattemæssigt. Prisen opdaterer sig løbende nederst på skærmen.';
+  } else {
+    $('#fc-s2-title').textContent = 'Firmatøj & tekstil merch';
+    $('#fc-s2-sub').innerHTML = 'Vi starter med anvendelsen — det er den, der afgør både materiale og forædlingsmetode. Prisen opdaterer sig løbende nederst på skærmen.';
+  }
+  setStep(2);
+  update();
+}
+
+function renderProducts(){
+  const list = FC_PRODUCTS[S.b.use] || [];
+  $('#fc-b-products').innerHTML = list.map(p =>
+    '<label class="fc-opt"><input type="radio" name="b-product" value="' + p.id + '"' + (S.b.product === p.id ? ' checked' : '') + '>' +
+    '<div class="fc-box"><div class="flex items-start justify-between gap-2">' +
+      '<span class="font-bold text-[15px] text-navy-950 leading-snug">' + esc(p.name) + '</span>' +
+      '<svg class="fc-tick shrink-0 mt-0.5" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1F4568" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>' +
+      '<p class="mt-1.5 text-[13px] text-slatey-500 leading-snug">' + esc(p.spec) + '</p>' +
+      '<p class="mt-2 text-[12.5px] font-semibold text-navy-600">fra ' + kr(p.p.basis) + ' pr. stk.</p>' +
+    '</div></label>').join('');
+}
+
+function setKB(field, html){
+  const host = $('[data-kb="' + field + '"]', $('#fc-form-' + S.track));
+  if (host) host.innerHTML = html || '';
+}
+
+/* ============================================================
+   10) LØBENDE OPDATERING
+   ============================================================ */
+
+function update(){
+  if (S.track === 'A') {
+    setKB('occasion', S.a.occasion ? kbBox(KB.occasion[S.a.occasion].t, KB.occasion[S.a.occasion].h) : '');
+    setKB('band', S.a.band ? kbBox(KB.band.t, KB.band.h) : '');
+    setKB('solution', kbBox(KB.solution[S.a.solution].t, KB.solution[S.a.solution].h));
+    $('#fc-a-band-custom').classList.toggle('fc-hide', S.a.band !== '800');
+    renderTaxLive();
+  } else if (S.track === 'B') {
+    setKB('use', S.b.use ? kbBox(KB.use[S.b.use].t, KB.use[S.b.use].h) : '');
+    setKB('quality', S.b.quality ? kbBox(KB.quality.t, KB.quality.h) : '');
+    setKB('method', S.b.method ? kbBox(KB.method[S.b.method].t, KB.method[S.b.method].h) : '');
+    $('#fc-b-product-card').classList.toggle('fc-hide', !S.b.use);
+    $('#fc-b-deco-card').classList.toggle('fc-hide', !(S.b.product && S.b.quality));
+    $('#fc-b-qty-card').classList.toggle('fc-hide', !S.b.method);
+    $('#fc-b-colors-wrap').classList.toggle('fc-hide', S.b.method !== 'silke');
+    const w = textileWarning(), wb = $('#fc-b-warn');
+    wb.classList.toggle('fc-hide', !w);
+    wb.innerHTML = w ? warnBox(w[0], w[1], w[2]) : '';
+  }
+
+  const ok = isReady();
+  $('#fc-to-price').disabled = !ok;
+  $('#fc-to-price-hint').textContent = ok
+    ? 'Prisen er klar — du behøver ikke oplyse noget for at se den.'
+    : 'Udfyld felterne ovenfor for at låse prisen op.';
+
+  const r = ok ? calc() : null;
+  $('#fc-sticky').classList.toggle('fc-off', !(currentStep === 2 && r));
+  if (r) {
+    $('#fc-sticky-unit').textContent = kr2(r.unit);
+    $('#fc-sticky-total').textContent = kr(r.total);
+  }
+}
+
+/* ============================================================
+   11) TRIN 3 — PRISVISNING
+   ============================================================ */
+
+function configLine(){
+  if (S.track === 'A') {
+    const occ = { jul:'Julegave', jubi:'Jubilæumsgave', kunde:'Kundegave' }[S.a.occasion];
+    return occ + ' · ' + nf0.format(S.a.qty) + ' modtagere · budget ' + kr(bandValue()) + ' pr. gave · '
+      + (S.a.solution === 'portal' ? 'vælg-selv portal' : 'kurateret fast gave') + ' · '
+      + (S.a.delivery === 'samlet' ? 'samlet levering' : 'levering til hjemmeadresser')
+      + (S.a.branding ? ' · branded emballage' : '');
+  }
+  const p = currentProduct();
+  const use = { haandvaerk:'Håndværk & produktion', kontor:'Kontor & kundekontakt', messe:'Messe & giveaways' }[S.b.use];
+  const q = { basis:'Basis', premium:'Premium', gots:'Økologisk/GOTS' }[S.b.quality];
+  const m = { transfer:'transfertryk', silke:'silketryk', broderi:'broderi' }[S.b.method];
+  return use + ' · ' + p.name + ' · ' + q + ' · ' + m
+    + (S.b.method === 'silke' ? ' i ' + S.b.colors + ' farve' + (S.b.colors > 1 ? 'r' : '') : '')
+    + ' på ' + S.b.placements + ' placering' + (S.b.placements > 1 ? 'er' : '')
+    + ' · ' + nf0.format(S.b.qty) + ' stk.';
+}
+
+function renderCompare(r){
+  const box = $('#fc-compare');
+  if (S.track !== 'B') { box.classList.add('fc-hide'); return; }
+  box.classList.remove('fc-hide');
+  const q = r.qty, names = { transfer:'Transfertryk', silke:'Silketryk', broderi:'Broderi' };
+  const res = ['transfer','silke','broderi'].map(m => {
+    const d = decoCost(m, q, S.b.colors, S.b.placements);
+    return { m, setup:d.setup, per:d.perUnit, unit: r.garment + d.perUnit + d.setup / q };
+  });
+  const best = res.slice().sort((a, b) => a.unit - b.unit)[0];
+
+  $('#fc-compare-rows').innerHTML = res.map(x => {
+    const isCur = x.m === S.b.method, isBest = x.m === best.m;
+    return '<tr class="' + (isCur ? 'bg-navy-100/60' : '') + '">'
+      + '<td class="py-3 pr-4 border-t border-slatey-200 font-bold text-navy-950">' + names[x.m]
+        + (isCur ? '<span class="ml-2 text-[10.5px] font-bold uppercase tracking-wider text-navy-600 bg-white px-2 py-0.5 rounded border border-navy-300">dit valg</span>' : '')
+        + (isBest && !isCur ? '<span class="ml-2 text-[10.5px] font-bold uppercase tracking-wider text-[#166534] bg-[#E6F6EC] px-2 py-0.5 rounded">billigst</span>' : '')
+        + (isBest && isCur ? '<span class="ml-2 text-[10.5px] font-bold uppercase tracking-wider text-[#166534] bg-[#E6F6EC] px-2 py-0.5 rounded">billigst</span>' : '')
+      + '</td>'
+      + '<td class="py-3 pr-4 border-t border-slatey-200 text-slatey-700">' + (x.setup ? kr(x.setup) : '–') + '</td>'
+      + '<td class="py-3 pr-4 border-t border-slatey-200 text-slatey-700">' + kr2(x.per) + '</td>'
+      + '<td class="py-3 border-t border-slatey-200 font-bold text-navy-950">' + kr2(x.unit) + '</td></tr>';
+  }).join('');
+
+  const cur = res.filter(x => x.m === S.b.method)[0];
+  const diff = (cur.unit - best.unit) * q;
+  $('#fc-compare-tip').innerHTML = (best.m === S.b.method)
+    ? '<span class="font-semibold text-[#166534]">Dit valg er også det billigste ved ' + nf0.format(q) + ' stk.</span> '
+      + 'Bemærk dog, at pris ikke er det eneste kriterium — holdbarhed og udtryk vejer ofte tungere på tøj, medarbejderne skal bære dagligt.'
+    : '<span class="font-semibold text-navy-950">' + names[best.m] + ' ville være ' + kr2(cur.unit - best.unit)
+      + ' billigere pr. stk. — ' + kr(diff) + ' på hele ordren.</span> '
+      + 'Om det er den rigtige beslutning afhænger af udtrykket: ' + names[S.b.method].toLowerCase()
+      + ' er valgt af en grund, og på firmatøj holder det valg typisk i flere år.';
+}
+
+function renderPrice(){
+  const r = calc(); if (!r) return;
+  $('#fc-price-config').textContent = configLine();
+  $('#fc-price-unit').textContent = kr2(r.unit);
+  $('#fc-price-total').textContent = kr(r.total);
+  $('#fc-price-vat').textContent = 'Svarer til ' + kr(r.total * (1 + FC_CONFIG.vatRate)) + ' inkl. moms.';
+
+  $('#fc-price-rows').innerHTML = r.rows.map(row =>
+    '<tr><td class="align-top"><span class="font-semibold text-white">' + row.label + '</span>'
+    + (row.once ? '<span class="ml-2 text-[10.5px] font-bold uppercase tracking-wider text-gold-500 border border-gold-500/50 px-1.5 py-0.5 rounded">engangs</span>' : '')
+    + '<br><span class="text-navy-300 text-[12.5px]">' + row.detail + '</span></td>'
+    + '<td class="align-top text-right font-bold whitespace-nowrap text-white">' + kr(row.amount) + '</td></tr>'
+  ).join('') + '<tr class="bg-white/[.07]"><td class="font-extrabold text-white">Total ex. moms</td>'
+    + '<td class="text-right font-extrabold text-gold-500 whitespace-nowrap">' + kr(r.total) + '</td></tr>';
+
+  // Kontekstuelle noter under prisen
+  const notes = [];
+  if (S.track === 'A') {
+    const incl = bandValue() * 1.25;
+    if (S.a.occasion === 'jul' && incl <= FC_PRICING.tax2026.julegave)
+      notes.push(noteBox('info','Skattefri julegave','Gaveværdien på ' + kr(incl) + ' inkl. moms ligger under grænsen på ' + kr(FC_PRICING.tax2026.julegave) + ' Medarbejderen beskattes ikke.'));
+    if (S.a.occasion === 'jul' && incl > FC_PRICING.tax2026.julegave)
+      notes.push(noteBox('warn','Bemærk beskatningen','Gaveværdien overstiger julegavegrænsen på ' + kr(FC_PRICING.tax2026.julegave) + ' inkl. moms. Hele værdien skal medregnes i medarbejderens indkomst — det bør kommunikeres, inden gaven uddeles.'));
+    if (S.a.solution === 'portal' && S.a.qty < FC_PRICING.gifts.portalSetupFreeFrom)
+      notes.push(noteBox('info','Opsætningen bliver gratis ved ' + FC_PRICING.gifts.portalSetupFreeFrom + ' modtagere','I er ' + (FC_PRICING.gifts.portalSetupFreeFrom - S.a.qty) + ' modtagere fra at spare ' + kr(FC_PRICING.gifts.portalSetup) + ' i portalopsætning.'));
+    if (S.a.delivery === 'hjem')
+      notes.push(noteBox('info','Levering til hjemmeadresser','Fragten udgør ' + kr(FC_PRICING.gifts.delivery.hjem.per) + ' pr. modtager. Vi skal bruge en navne- og adresseliste i regneark — vi sender skabelonen sammen med tilbuddet.'));
+  } else {
+    const once = r.rows.filter(x => x.once).reduce((s, x) => s + x.amount, 0);
+    if (once > 0)
+      notes.push(noteBox('info','Engangsomkostninger genbruges','' + kr(once) + ' af totalen er opstart, som kun betales første gang. Ved efterbestilling af samme logo falder stykprisen til ' + kr2(r.unit - once / r.qty)));
+    const w = textileWarning();
+    if (w) notes.push(noteBox(w[0] === 'warn' ? 'warn' : 'info', w[1], w[2]));
+    notes.push(noteBox('info','Prisen dækker ikke størrelsesfordeling endnu','Vi regner med standardfordelingen. Har I en fast fordeling eller navnemærkning pr. medarbejder, justerer vi i det bindende tilbud.'));
+  }
+  $('#fc-price-notes').innerHTML = notes.join('');
+
+  renderCompare(r);
+  renderLead(r);
+}
+
+/* ============================================================
+   12) TRIN 4 — LEAD-FORMULAR
+   ============================================================ */
+
+function renderLead(r){
+  const bullets = arr => arr.map(b =>
+    '<li class="flex items-start gap-2.5 text-[14px] text-slatey-700">'
+    + '<svg class="shrink-0 mt-1" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2A5C89" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>'
+    + '<span>' + b + '</span></li>').join('');
+
+  if (S.track === 'A') {
+    $('#fc-lead-title').innerHTML = 'Vil du have tilsendt det fulde interaktive PDF-katalog med konkrete gaveforslag til dit budget — samt skatte-tjeklisten?';
+    $('#fc-lead-sub').innerHTML = 'Vi sammensætter kataloget efter <strong>præcis den beregning, du lige har lavet</strong>: '
+      + nf0.format(r.qty) + ' modtagere i ' + kr(bandValue()) + '-båndet. Ingen generisk brochure.';
+    $('#fc-lead-bullets').innerHTML = bullets([
+      'Interaktivt PDF-katalog med konkrete gaver i dit budget-bånd',
+      'Skatte-tjeklisten for 2026 i ét overskueligt A4-ark',
+      'Prisoversigt på præcis din konfiguration',
+      'Forslag til vælg-selv sortiment, hvis det er relevant'
+    ]);
+    $('#fc-submit-label').textContent = 'Send mig kataloget & tjeklisten';
+    $('#fc-upload-wrap').classList.add('fc-hide');
+    $('#fc-done-text').innerHTML = 'Kataloget og skatte-tjeklisten er på vej til din indbakke. En af vores gaverådgivere følger op inden for én hverdag med konkrete forslag til dit budget.';
+  } else {
+    $('#fc-lead-title').innerHTML = 'Få et bindende tilbud + en GRATIS digital 3D-mockup med DIT logo sat på tøjet';
+    $('#fc-lead-sub').innerHTML = 'Du får din egen ' + esc(r.product.name.toLowerCase())
+      + ' visualiseret med jeres logo i den valgte placering og størrelse — så I kan se det, før I bestiller. Helt uforpligtende.';
+    $('#fc-lead-bullets').innerHTML = bullets([
+      'Digital 3D-mockup med jeres logo — typisk klar inden for 1–2 hverdage',
+      'Bindende tilbud på ' + nf0.format(r.qty) + ' stk. med fast leveringstid',
+      'Vurdering af, om logoet er egnet til ' + r.methodName.toLowerCase(),
+      'Gratis stofprøve tilsendt, hvis I ønsker at mærke kvaliteten først'
+    ]);
+    $('#fc-submit-label').textContent = 'Få tilbud & 3D-mockup';
+    $('#fc-upload-wrap').classList.remove('fc-hide');
+    $('#fc-done-text').innerHTML = 'Vi går i gang med din 3D-mockup. Har du uploadet et logo, er den typisk klar inden for 1–2 hverdage — ellers kontakter vi dig for at få filen.';
+  }
+
+  $('#fc-h-track').value = S.track === 'A' ? 'Firmagaver & julegaver' : 'Firmatøj & tekstil';
+  $('#fc-h-config').value = configLine();
+  $('#fc-h-unit').value = r.unit.toFixed(2);
+  $('#fc-h-total').value = Math.round(r.total);
+  $('#fc-h-qty').value = r.qty;
+  $('#fc-done-summary').textContent = configLine() + ' — ' + kr2(r.unit) + ' pr. stk., i alt ' + kr(r.total) + ' ex. moms.';
+}
+
+/* ============================================================
+   13) VALIDERING & AFSENDELSE
+   ============================================================ */
+
+function fieldError(input, msg){
+  const p = input.closest('div').querySelector('.fc-msg');
+  input.classList.toggle('fc-err', !!msg);
+  if (p) { p.textContent = msg || ''; p.classList.toggle('fc-hide', !msg); }
+  return !msg;
+}
+
+function validate(){
+  let ok = true;
+  const company = $('#fc-company'), email = $('#fc-email'), phone = $('#fc-phone');
+
+  ok = fieldError(company, company.value.trim().length < 2 ? 'Angiv venligst firmanavn.' : '') && ok;
+
+  const ev = email.value.trim();
+  ok = fieldError(email, !/^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/.test(ev) ? 'Angiv en gyldig e-mailadresse.' : '') && ok;
+
+  const digits = phone.value.replace(/[^\d]/g, '');
+  ok = fieldError(phone, digits.length < 8 ? 'Angiv et telefonnummer med mindst 8 cifre.' : '') && ok;
+
+  const file = $('#fc-logo').files[0];
+  if (file && file.size > 10 * 1024 * 1024) {
+    ok = fieldError($('#fc-logo'), 'Filen er større end 10 MB. Send den i stedet som link, eller kontakt os direkte.') && false;
+    $('#fc-upload-wrap').querySelector('.fc-msg').classList.remove('fc-hide');
+  } else {
+    const m = $('#fc-upload-wrap').querySelector('.fc-msg');
+    if (m) { m.classList.add('fc-hide'); m.textContent = ''; }
+  }
+
+  const consent = $('#fc-consent'), cmsg = $('#fc-consent-msg');
+  if (!consent.checked) {
+    cmsg.textContent = 'Du skal acceptere, at vi må kontakte dig, før vi kan sende materialet.';
+    cmsg.classList.remove('fc-hide'); ok = false;
+  } else { cmsg.classList.add('fc-hide'); }
+
+  return ok;
+}
+
+function submitLead(e){
+  e.preventDefault();
+  if (!validate()) {
+    const first = $('#fc-form').querySelector('.fc-err') || $('#fc-consent');
+    first.scrollIntoView({ behavior:'smooth', block:'center' });
+    if (first.focus) first.focus();
+    return;
+  }
+
+  const btn = $('#fc-submit'), label = $('#fc-submit-label'), original = label.textContent;
+  btn.disabled = true; btn.classList.add('opacity-70'); label.textContent = 'Sender …';
+
+  const fd = new FormData($('#fc-form'));
+  const done = () => { setStep(5); markStep4(); btn.disabled = false; btn.classList.remove('opacity-70'); label.textContent = original; };
+  const fail = () => {
+    btn.disabled = false; btn.classList.remove('opacity-70'); label.textContent = original;
+    alert('Beklager — der opstod en fejl under afsendelsen. Prøv igen, eller ring til os på hovednummeret.');
+  };
+
+  if (!FC_CONFIG.endpoint) {
+    // DEMO-TILSTAND: intet endpoint konfigureret.
+    const obj = {}; fd.forEach((v, k) => { obj[k] = (v instanceof File) ? v.name : v; });
+    console.log('[Freeconcept] Lead klar til afsendelse:', obj);
+    setTimeout(done, 700);
+    return;
+  }
+
+  fetch(FC_CONFIG.endpoint, { method:'POST', body:fd, headers:{ 'Accept':'application/json' } })
+    .then(res => { if (!res.ok) throw new Error('HTTP ' + res.status); done(); })
+    .catch(err => { console.error('[Freeconcept] Afsendelse fejlede:', err); fail(); });
+}
+
+/* ============================================================
+   14) EVENT-BINDING
+   ============================================================ */
+
+$$('.fc-track').forEach(b => b.addEventListener('click', () => startTrack(b.dataset.track)));
+$$('.fc-back').forEach(b => b.addEventListener('click', () => setStep(Number(b.dataset.to))));
+
+// Radio- og checkbox-valg
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (t.name === 'a-occasion')      S.a.occasion = t.value;
+  else if (t.name === 'a-band')     S.a.band = t.value;
+  else if (t.name === 'a-solution') S.a.solution = t.value;
+  else if (t.name === 'a-delivery') S.a.delivery = t.value;
+  else if (t.id === 'fc-a-branding') S.a.branding = t.checked;
+  else if (t.id === 'fc-a-bandval') S.a.bandCustom = Number(t.value) || 800;
+  else if (t.name === 'b-use')      { S.b.use = t.value; S.b.product = null; renderProducts(); }
+  else if (t.name === 'b-product')  S.b.product = t.value;
+  else if (t.name === 'b-quality')  S.b.quality = t.value;
+  else if (t.name === 'b-method')   S.b.method = t.value;
+  else if (t.id === 'fc-b-placements') S.b.placements = Number(t.value);
+  else if (t.id === 'fc-b-colors')  S.b.colors = Number(t.value);
+  else if (t.id === 'fc-logo') {
+    const f = t.files[0];
+    $('#fc-logo-label').textContent = f ? f.name + ' (' + (f.size / 1024 / 1024).toFixed(1) + ' MB)' : 'Vælg fil eller træk den hertil';
+  }
+  else return;
+  update();
+});
+
+// Antalsfelter
+function bindQty(id, key){
+  const el = $(id);
+  const apply = () => {
+    let v = parseInt(el.value, 10);
+    if (isNaN(v) || v < 1) v = 1;
+    if (v > 100000) v = 100000;
+    (S[key === 'a' ? 'a' : 'b']).qty = v;
+    const wrap = $('[data-qtychips="' + id.slice(1) + '"]');
+    if (wrap) $$('.fc-chip', wrap).forEach(c => c.setAttribute('aria-pressed', String(Number(c.dataset.v) === v)));
+    update();
+  };
+  el.addEventListener('input', apply);
+  el.addEventListener('blur', () => { if (!el.value || parseInt(el.value, 10) < 1) el.value = 1; apply(); });
+  const wrap = $('[data-qtychips="' + id.slice(1) + '"]');
+  if (wrap) $$('.fc-chip', wrap).forEach(c => c.addEventListener('click', () => { el.value = c.dataset.v; apply(); }));
+  apply();
+}
+bindQty('#fc-a-qty', 'a');
+bindQty('#fc-b-qty', 'b');
+
+// Videre til prisen
+function goPrice(){ if (!isReady()) return; renderPrice(); setStep(3); }
+$('#fc-to-price').addEventListener('click', goPrice);
+$('#fc-sticky-cta').addEventListener('click', goPrice);
+
+// Formular
+$('#fc-form').addEventListener('submit', submitLead);
+$$('#fc-company, #fc-email, #fc-phone').forEach(i =>
+  i.addEventListener('input', () => { if (i.classList.contains('fc-err')) fieldError(i, ''); }));
+$('#fc-consent').addEventListener('change', () => { if ($('#fc-consent').checked) $('#fc-consent-msg').classList.add('fc-hide'); });
+
+// Drag & drop til logo
+const drop = $('#fc-upload-wrap');
+if (drop) {
+  ['dragenter','dragover'].forEach(ev => drop.addEventListener(ev, e => {
+    e.preventDefault(); drop.querySelector('label').classList.add('border-navy-500','bg-slatey-50');
+  }));
+  ['dragleave','drop'].forEach(ev => drop.addEventListener(ev, e => {
+    e.preventDefault(); drop.querySelector('label').classList.remove('border-navy-500','bg-slatey-50');
+  }));
+  drop.addEventListener('drop', e => {
+    if (e.dataTransfer.files && e.dataTransfer.files.length) {
+      $('#fc-logo').files = e.dataTransfer.files;
+      $('#fc-logo').dispatchEvent(new Event('change', { bubbles:true }));
+    }
+  });
+}
+
+// Markér trin 4, når lead-formularen kommer i syne
+if ('IntersectionObserver' in window) {
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(en => {
+      if (currentStep !== 3) return;
+      if (en.isIntersecting) markStep4();
+      else { $$('.fc-step').forEach(el => { const s = Number(el.dataset.step);
+        el.classList.toggle('is-active', s === 3); el.classList.toggle('is-done', s < 3); }); }
+    });
+  }, { threshold:0.25 });
+  io.observe($('#fc-lead'));
+}
+
+// Genstart
+function reset(){
+  S.track = null;
+  S.a = { occasion:null, qty:100, band:null, bandCustom:800, solution:'fast', delivery:'samlet', branding:false };
+  S.b = { use:null, product:null, quality:null, method:null, placements:1, colors:1, qty:100 };
+  $('#fc-form').reset();
+  $$('input[type=radio]').forEach(r => { r.checked = (r.value === 'fast' || r.value === 'samlet'); });
+  $('#fc-a-qty').value = 100; $('#fc-b-qty').value = 100;
+  $('#fc-b-placements').value = '1'; $('#fc-b-colors').value = '1';
+  $('#fc-logo-label').textContent = 'Vælg fil eller træk den hertil';
+  $$('.fc-msg').forEach(m => m.classList.add('fc-hide'));
+  $$('.fc-err').forEach(m => m.classList.remove('fc-err'));
+  $('#fc-b-products').innerHTML = '';
+  ['#fc-b-product-card','#fc-b-deco-card','#fc-b-qty-card','#fc-tax-live','#fc-b-warn','#fc-compare'].forEach(s => $(s).classList.add('fc-hide'));
+  $$('[data-kb]').forEach(k => k.innerHTML = '');
+  setStep(1);
+}
+$('#fc-restart').addEventListener('click', reset);
+$('#fc-again').addEventListener('click', reset);
+
+// Init
+$('#fc-year').textContent = new Date().getFullYear();
+setStep(1);
+
+})();
+</script>
+
+</body>
+</html>
