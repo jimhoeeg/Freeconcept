@@ -8,29 +8,41 @@
 <body>
 <!-- ============================================================
      FREECONCEPT.DK – INTERAKTIVT LEAD-GENERERINGSMODUL
-     Selvstændig HTML-fil. Kan indsættes direkte i WordPress
-     (Custom HTML-blok / iframe) eller som selvstændig side.
-     Ingen build, ingen dependencies ud over Tailwind CDN.
+     ------------------------------------------------------------
+     Designet til at ligge på en undersideside af freeconcept.dk.
+     Modulet har BEVIDST ingen egen header med logo og menu — den
+     står allerede øverst på siden. Det starter direkte i kunde-
+     rejsen, så flowet bliver: site-menu → trinindikator → indhold.
+
+     Designlinje hentet fra freeconcept.dk:
+       Farver     hvid flade, #131313 tekst, #E3002B accent (SportDirect)
+       Skrift     Montserrat (geometrisk sans, som sitets overskrifter)
+       Former     store bløde hjørner (20px) og pilleformede felter
+       Tone       luftig, fed sentence-case overskrift, grå versal-eyebrow
      ------------------------------------------------------------
      TILPAS HER:
        1) FC_CONFIG.endpoint  -> jeres formular-endpoint
        2) FC_PRICING          -> jeres reelle kostpriser/marginer
-       3) Farver i tailwind.config nedenfor
+       3) FC_LINKS            -> URL'er til jeres kategorisider
+       4) tailwind.config     -> farver, hvis brandet justeres
      ============================================================ -->
 
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap">
 <script src="https://cdn.tailwindcss.com/3.4.16"></script>
 <script>
 tailwind.config = {
   theme: {
     extend: {
       colors: {
-        navy: { 950:'#07121D', 900:'#0C1E30', 850:'#11293F', 800:'#173350', 700:'#1F4568',
-                600:'#2A5C89', 500:'#3B7AB0', 400:'#5F9CCE', 300:'#93BFE2', 100:'#DCEAF6' },
-        gold: { 500:'#E3A82B', 400:'#F0BC50', 100:'#FDF3DE' },
-        slatey:{ 50:'#F5F7FA', 100:'#EDF1F6', 200:'#DFE6EE', 300:'#C3CFDC', 500:'#6B7C90', 700:'#3D4C5C' }
+        ink:   { DEFAULT:'#131313', 700:'#3D3D3D', 500:'#5A5A5A', 400:'#8A8A8A', 300:'#B4B4B4' },
+        line:  { DEFAULT:'#E6E6E6', soft:'#F0F0F0' },
+        mist:  '#F6F6F6',
+        brand: { DEFAULT:'#E3002B', dark:'#B30021', bright:'#FF4152', tint:'#FDECEF' }
       },
-      fontFamily: { sans:['Inter','Segoe UI','Helvetica Neue','Arial','sans-serif'] },
-      boxShadow: { card:'0 1px 2px rgba(12,30,48,.04), 0 8px 24px -12px rgba(12,30,48,.18)' }
+      fontFamily: { sans:['Montserrat','Segoe UI','Helvetica Neue','Arial','sans-serif'] },
+      borderRadius: { xl2:'20px' }
     }
   }
 }
@@ -38,415 +50,408 @@ tailwind.config = {
 
 <style>
   #fc-app *{box-sizing:border-box}
-  /* color-scheme låser select/checkbox/textarea til lyst udseende,
-     så modulet også holder på et CMS-tema i mørk tilstand */
-  #fc-app{font-family:Inter,'Segoe UI',Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;
-          color:#0C1E30;color-scheme:light;background:#F5F7FA}
+  #fc-app{
+    font-family:Montserrat,'Segoe UI',Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;
+    color:#131313;color-scheme:light;background:#fff;
+  }
 
-  /* --- Valgkort (radio/checkbox som klikbare kort) --- */
+  /* --- Valgkort: hvid flade, rød når den er valgt (som sitets røde ikonaccent) --- */
   .fc-opt{display:block;cursor:pointer;position:relative}
   .fc-opt input{position:absolute;opacity:0;width:0;height:0}
   .fc-opt .fc-box{
-    border:1.5px solid #DFE6EE;background:#fff;border-radius:12px;padding:14px 16px;height:100%;
-    transition:border-color .16s ease, box-shadow .16s ease, background-color .16s ease, transform .16s ease;
+    border:1.5px solid #E6E6E6;background:#fff;border-radius:16px;padding:16px 18px;height:100%;
+    transition:border-color .16s ease, background-color .16s ease, transform .16s ease, box-shadow .16s ease;
   }
-  .fc-opt:hover .fc-box{border-color:#5F9CCE;transform:translateY(-1px)}
-  .fc-opt input:checked + .fc-box{
-    border-color:#1F4568;background:#F5F9FD;box-shadow:0 0 0 3px rgba(31,69,104,.12);
-  }
-  .fc-opt input:focus-visible + .fc-box{outline:2px solid #E3A82B;outline-offset:2px}
+  .fc-opt:hover .fc-box{border-color:#B4B4B4;transform:translateY(-2px)}
+  .fc-opt input:checked + .fc-box{border-color:#E3002B;background:#FFF8F9;box-shadow:0 0 0 3px rgba(227,0,43,.10)}
+  .fc-opt input:focus-visible + .fc-box{outline:2px solid #131313;outline-offset:2px}
   .fc-opt input:checked + .fc-box .fc-tick{opacity:1;transform:scale(1)}
   .fc-tick{opacity:0;transform:scale(.6);transition:.18s ease}
 
-  /* --- Antals-chips --- */
-  .fc-chip{border:1.5px solid #DFE6EE;background:#fff;border-radius:999px;padding:6px 14px;font-size:13px;font-weight:600;color:#3D4C5C;transition:.15s}
-  .fc-chip:hover{border-color:#5F9CCE;color:#1F4568}
-  .fc-chip[aria-pressed="true"]{background:#0C1E30;border-color:#0C1E30;color:#fff}
+  /* --- Pille-chips, formet som sitets søgefelt --- */
+  .fc-chip{border:1.5px solid #E6E6E6;background:#fff;border-radius:999px;padding:7px 16px;font-size:13px;font-weight:600;color:#3D3D3D;transition:.15s}
+  .fc-chip:hover{border-color:#B4B4B4}
+  .fc-chip[aria-pressed="true"]{background:#131313;border-color:#131313;color:#fff}
 
-  /* --- Ekspert-viden boks --- */
-  .fc-kb{border-left:4px solid #E3A82B;background:linear-gradient(90deg,#FDF6E7 0%,#FBFCFE 60%);
-         border-radius:0 12px 12px 0;padding:16px 18px;animation:fcIn .3s ease}
-  .fc-kb h4{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:#9A6F10;font-weight:800}
-  .fc-kb p{font-size:14px;line-height:1.65;color:#3D4C5C;margin-top:6px}
-  .fc-kb strong{color:#0C1E30;font-weight:700}
-  .fc-kb ul{margin-top:8px;font-size:14px;line-height:1.6;color:#3D4C5C}
-  .fc-kb li{padding-left:16px;position:relative;margin-top:5px}
-  .fc-kb li:before{content:"";position:absolute;left:0;top:8px;width:6px;height:6px;border-radius:50%;background:#E3A82B}
+  /* --- Ekspert-viden --- */
+  .fc-kb{border-left:3px solid #E3002B;background:#F6F6F6;border-radius:0 16px 16px 0;padding:20px 22px;animation:fcIn .3s ease}
+  .fc-kb h4{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#E3002B;font-weight:700}
+  .fc-kb p{font-size:14.5px;line-height:1.7;color:#3D3D3D;margin-top:8px}
+  .fc-kb strong{color:#131313;font-weight:700}
+  .fc-kb ul{margin-top:10px;font-size:14.5px;line-height:1.65;color:#3D3D3D}
+  .fc-kb li{padding-left:18px;position:relative;margin-top:7px}
+  .fc-kb li:before{content:"";position:absolute;left:0;top:9px;width:5px;height:5px;border-radius:50%;background:#E3002B}
 
   @keyframes fcIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
   .fc-in{animation:fcIn .32s ease}
   .fc-hide{display:none !important}
+  @media (prefers-reduced-motion:reduce){
+    #fc-app *,#fc-app *:before,#fc-app *:after{animation-duration:.01ms !important;transition-duration:.01ms !important}
+  }
 
-  /* --- Inputs --- */
-  .fc-input{width:100%;border:1.5px solid #DFE6EE;border-radius:10px;padding:12px 14px;font-size:15px;background:#fff;transition:.15s;color:#0C1E30}
-  .fc-input:focus{outline:none;border-color:#1F4568;box-shadow:0 0 0 3px rgba(31,69,104,.12)}
-  .fc-input::placeholder{color:#9BA9B9}
-  .fc-input.fc-err{border-color:#D14343;background:#FEF7F7}
-  .fc-lbl{font-size:13px;font-weight:600;color:#3D4C5C;margin-bottom:6px;display:block}
+  /* --- Felter: pilleformede som sitets søgefelt --- */
+  .fc-input{width:100%;border:1.5px solid #E6E6E6;border-radius:999px;padding:13px 20px;font-size:15px;background:#fff;transition:.15s;color:#131313;font-family:inherit}
+  textarea.fc-input{border-radius:20px}
+  .fc-input:focus{outline:none;border-color:#131313}
+  .fc-input::placeholder{color:#B4B4B4}
+  .fc-input.fc-err{border-color:#E3002B;background:#FFF8F9}
+  .fc-lbl{font-size:13px;font-weight:600;color:#3D3D3D;margin-bottom:7px;display:block}
 
-  /* --- Stepper --- */
-  .fc-step-dot{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;
-    background:rgba(255,255,255,.12);color:#93BFE2;border:1.5px solid rgba(147,191,226,.35);transition:.25s}
-  .fc-step.is-active .fc-step-dot{background:#E3A82B;color:#07121D;border-color:#E3A82B}
-  .fc-step.is-done .fc-step-dot{background:#5F9CCE;color:#07121D;border-color:#5F9CCE}
-  .fc-step.is-active .fc-step-label{color:#fff}
-  .fc-step-label{font-size:12px;font-weight:600;color:#93BFE2;transition:.25s}
+  /* --- Trinindikator --- */
+  .fc-step-dot{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;
+    background:#fff;color:#8A8A8A;border:1.5px solid #E6E6E6;transition:.25s}
+  .fc-step.is-active .fc-step-dot{background:#E3002B;color:#fff;border-color:#E3002B}
+  .fc-step.is-done .fc-step-dot{background:#131313;color:#fff;border-color:#131313}
+  .fc-step-label{font-size:13px;font-weight:600;color:#8A8A8A;transition:.25s}
+  .fc-step.is-active .fc-step-label,.fc-step.is-done .fc-step-label{color:#131313}
 
-  /* --- Skat-status pille --- */
-  .fc-pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:5px 11px;border-radius:999px}
-  .fc-pill-ok{background:#E6F6EC;color:#166534}
-  .fc-pill-warn{background:#FDF1DC;color:#92610A}
-  .fc-pill-no{background:#FBE9E9;color:#9B1C1C}
+  /* --- Skattestatus --- */
+  .fc-pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:6px 13px;border-radius:999px}
+  .fc-pill-ok{background:#E8F5EC;color:#166534}
+  .fc-pill-warn{background:#FFF4E0;color:#8A5A00}
+  .fc-pill-no{background:#FDECEF;color:#B30021}
 
-  /* --- Sticky pris-bar --- */
+  /* --- Sporkort: mørk flade med fed hvid overskrift, som sitets kategorikort --- */
+  .fc-hero-a{background:linear-gradient(155deg,#333 0%,#171717 62%)}
+  .fc-hero-b{background:linear-gradient(155deg,#2A2A2A 0%,#101010 62%)}
+  .fc-track:hover .fc-hero-a,.fc-track:hover .fc-hero-b{transform:scale(1.03)}
+  .fc-hero-a,.fc-hero-b{transition:transform .4s cubic-bezier(.2,.6,.2,1)}
+
   #fc-sticky{position:sticky;bottom:0;z-index:30;transition:transform .3s ease, opacity .3s ease}
   #fc-sticky.fc-off{transform:translateY(120%);opacity:0;pointer-events:none}
 
-  /* --- Skjul number-spinners --- */
   #fc-app input[type=number]::-webkit-outer-spin-button,
   #fc-app input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
   #fc-app input[type=number]{-moz-appearance:textfield}
-
-  .fc-tbl td,.fc-tbl th{padding:10px 12px;font-size:13.5px}
-  .fc-tbl tr+tr td{border-top:1px solid rgba(147,191,226,.18)}
+  #fc-app .fc-num{font-variant-numeric:tabular-nums}
+  .fc-tbl td{padding:14px 16px;font-size:14px}
+  .fc-tbl tr+tr td{border-top:1px solid rgba(255,255,255,.10)}
 </style>
 
-<div id="fc-app" class="bg-slatey-50 min-h-screen">
+<div id="fc-app">
 
-  <!-- ======================= HEADER + STEPPER ======================= -->
-  <header class="bg-navy-950 text-white">
-    <div class="max-w-6xl mx-auto px-5 sm:px-8 pt-7 pb-6">
-      <div class="flex items-center justify-between gap-4 flex-wrap">
-        <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-lg bg-gold-500 grid place-items-center font-black text-navy-950 text-lg">F</div>
-          <div>
-            <div class="font-extrabold tracking-tight text-[17px] leading-none">Freeconcept</div>
-            <div class="text-[11px] text-navy-300 tracking-[.12em] uppercase mt-1">Erhvervsgaver &amp; profilbeklædning</div>
-          </div>
-        </div>
-        <button id="fc-restart" class="fc-hide text-[13px] font-semibold text-navy-300 hover:text-white transition flex items-center gap-1.5">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
-          Start forfra
-        </button>
-      </div>
-
-      <nav class="mt-7 flex items-center gap-2 sm:gap-4 overflow-x-auto pb-1" aria-label="Fremdrift">
+  <!-- ======================= TRININDIKATOR ======================= -->
+  <!-- Trinindikatoren er bevidst IKKE sticky: freeconcept.dk har selv en fastlåst
+       header, og to klæbende bjælker oven på hinanden ville dække indholdet. -->
+  <div class="border-b border-line bg-white">
+    <div class="max-w-[1200px] mx-auto px-5 sm:px-8 py-4 flex items-center justify-between gap-4">
+      <nav class="flex items-center gap-2.5 sm:gap-4 overflow-x-auto" aria-label="Fremdrift">
         <div class="fc-step is-active flex items-center gap-2.5 shrink-0" data-step="1">
           <span class="fc-step-dot">1</span><span class="fc-step-label whitespace-nowrap">Vælg spor</span>
         </div>
-        <div class="h-px w-5 sm:w-10 bg-navy-700 shrink-0"></div>
+        <span class="h-px w-4 sm:w-8 bg-line shrink-0"></span>
         <div class="fc-step flex items-center gap-2.5 shrink-0" data-step="2">
-          <span class="fc-step-dot">2</span><span class="fc-step-label whitespace-nowrap">Konfigurator</span>
+          <span class="fc-step-dot">2</span><span class="fc-step-label whitespace-nowrap">Konfigurér</span>
         </div>
-        <div class="h-px w-5 sm:w-10 bg-navy-700 shrink-0"></div>
+        <span class="h-px w-4 sm:w-8 bg-line shrink-0"></span>
         <div class="fc-step flex items-center gap-2.5 shrink-0" data-step="3">
-          <span class="fc-step-dot">3</span><span class="fc-step-label whitespace-nowrap">Åben pris</span>
+          <span class="fc-step-dot">3</span><span class="fc-step-label whitespace-nowrap">Se prisen</span>
         </div>
-        <div class="h-px w-5 sm:w-10 bg-navy-700 shrink-0"></div>
+        <span class="h-px w-4 sm:w-8 bg-line shrink-0"></span>
         <div class="fc-step flex items-center gap-2.5 shrink-0" data-step="4">
-          <span class="fc-step-dot">4</span><span class="fc-step-label whitespace-nowrap">Materiale</span>
+          <span class="fc-step-dot">4</span><span class="fc-step-label whitespace-nowrap">Få materialet</span>
         </div>
       </nav>
+      <button id="fc-restart" class="fc-hide text-[13px] font-semibold text-ink-500 hover:text-brand transition shrink-0 items-center gap-1.5 hidden sm:flex">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+        Start forfra
+      </button>
     </div>
-  </header>
+  </div>
 
-  <main class="max-w-6xl mx-auto px-5 sm:px-8 py-9 sm:py-12">
+  <main class="max-w-[1200px] mx-auto px-5 sm:px-8 py-10 sm:py-16">
 
   <!-- ======================= TRIN 1: VÆLG SPOR ======================= -->
   <section id="fc-s1" class="fc-in">
-    <p class="text-[11px] font-bold tracking-[.16em] uppercase text-navy-600">Trin 1 af 4</p>
-    <h1 class="mt-2 text-[28px] sm:text-[38px] leading-[1.15] font-extrabold tracking-tight text-navy-950 max-w-2xl">
-      Se prisen først.<br class="hidden sm:block"> Tal med en sælger bagefter.
+    <p class="text-[13px] uppercase tracking-[.09em] text-ink-400 font-medium">Prisberegner</p>
+    <h1 class="mt-3 text-[32px] sm:text-[46px] leading-[1.1] font-extrabold tracking-tight text-ink max-w-3xl text-balance">
+      Se prisen først. Tal med en rådgiver bagefter.
     </h1>
-    <p class="mt-4 text-[15px] sm:text-base text-slatey-700 leading-relaxed max-w-2xl">
-      Vi tror på åbne priser. Konfigurér din løsning nedenfor, så får du en realistisk stykpris og totalpris
-      <strong class="text-navy-900">ex. moms direkte på skærmen</strong> — før du afgiver en eneste oplysning.
+    <p class="mt-5 text-[16px] text-ink-500 leading-relaxed max-w-[62ch]">
+      Vi tror på åbne priser. Konfigurér din løsning, så får du en realistisk stykpris og totalpris
+      <strong class="text-ink font-semibold">ex. moms direkte på skærmen</strong> — før du afgiver en eneste oplysning.
       Undervejs deler vi den viden, vores kunder normalt først får på et møde.
     </p>
 
-    <div class="mt-9 grid md:grid-cols-2 gap-5">
-      <button class="fc-track group text-left bg-white rounded-2xl border-[1.5px] border-slatey-200 hover:border-navy-700 shadow-card hover:shadow-lg transition-all duration-200 p-7 focus:outline-none focus-visible:ring-4 focus-visible:ring-navy-700/20" data-track="A">
-        <div class="flex items-start justify-between">
-          <div class="w-12 h-12 rounded-xl bg-navy-100 grid place-items-center text-navy-700 group-hover:bg-navy-950 group-hover:text-gold-500 transition-colors">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M3 13h18M12 8v13"/><path d="M12 8S9.5 3.5 7.5 4.5 8 8 12 8zM12 8s2.5-4.5 4.5-3.5S16 8 12 8z"/></svg>
-          </div>
-          <span class="text-[11px] font-bold tracking-wider uppercase text-slatey-500 bg-slatey-100 px-2.5 py-1 rounded-md">Spor A</span>
-        </div>
-        <h2 class="mt-5 text-[21px] font-extrabold tracking-tight text-navy-950">Firmagaver &amp; Julegaver</h2>
-        <p class="mt-2 text-[14.5px] text-slatey-700 leading-relaxed">
-          Julegaver, jubilæer og kundegaver. Med indbygget tjek af SKATs bagatelgrænser og rådgivning om vælg-selv-portaler.
-        </p>
-        <p class="mt-4 text-[12.5px] font-semibold text-slatey-500">Typisk for: HR · Office Manager · Direktion</p>
-        <span class="mt-5 inline-flex items-center gap-2 text-[14px] font-bold text-navy-700 group-hover:gap-3 transition-all">
-          Beregn gavebudget
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+    <div class="mt-10 grid md:grid-cols-2 gap-6">
+      <button class="fc-track group text-left bg-white rounded-[20px] border border-line hover:border-ink transition-colors duration-200 overflow-hidden focus:outline-none focus-visible:ring-4 focus-visible:ring-brand/20" data-track="A">
+        <span class="block relative h-[220px] sm:h-[260px] overflow-hidden">
+          <span class="fc-hero-a absolute inset-0"></span>
+          <span class="absolute top-5 left-6 text-[11px] font-bold tracking-[.14em] uppercase text-white/55">Spor A</span>
+          <svg class="absolute top-6 right-6 text-white/25" width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M3 13h18M12 8v13"/><path d="M12 8S9.5 3.5 7.5 4.5 8 8 12 8zM12 8s2.5-4.5 4.5-3.5S16 8 12 8z"/></svg>
+          <span class="absolute left-6 right-6 bottom-6 block text-[27px] sm:text-[32px] font-extrabold tracking-tight text-white leading-[1.12]">Firmagaver &amp;<br>julegaver</span>
+        </span>
+        <span class="block p-6 sm:p-7">
+          <span class="block text-[15px] text-ink-500 leading-relaxed">
+            Julegaver, jubilæer og kundegaver — med indbygget tjek af SKATs bagatelgrænser og rådgivning om vælg-selv-portaler.
+          </span>
+          <span class="mt-4 block text-[13px] font-semibold text-ink-400">HR · Office Manager · Direktion</span>
+          <span class="mt-5 inline-flex items-center gap-2 text-[15px] font-bold text-brand group-hover:gap-3.5 transition-all">
+            Beregn gavebudget
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </span>
         </span>
       </button>
 
-      <button class="fc-track group text-left bg-white rounded-2xl border-[1.5px] border-slatey-200 hover:border-navy-700 shadow-card hover:shadow-lg transition-all duration-200 p-7 focus:outline-none focus-visible:ring-4 focus-visible:ring-navy-700/20" data-track="B">
-        <div class="flex items-start justify-between">
-          <div class="w-12 h-12 rounded-xl bg-navy-100 grid place-items-center text-navy-700 group-hover:bg-navy-950 group-hover:text-gold-500 transition-colors">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 3 12 6l3.5-3 4.5 2.2-2 5-2 .5V21H8V10.7l-2-.5-2-5z"/></svg>
-          </div>
-          <span class="text-[11px] font-bold tracking-wider uppercase text-slatey-500 bg-slatey-100 px-2.5 py-1 rounded-md">Spor B</span>
-        </div>
-        <h2 class="mt-5 text-[21px] font-extrabold tracking-tight text-navy-950">Firmatøj &amp; Tekstil Merch</h2>
-        <p class="mt-2 text-[14.5px] text-slatey-700 leading-relaxed">
-          Arbejdstøj, profilbeklædning og messe-merch. Med materialevalg, forædlingsmetode og live sammenligning af tryk vs. broderi.
-        </p>
-        <p class="mt-4 text-[12.5px] font-semibold text-slatey-500">Typisk for: Marketing · Indkøb · Event</p>
-        <span class="mt-5 inline-flex items-center gap-2 text-[14px] font-bold text-navy-700 group-hover:gap-3 transition-all">
-          Beregn tekstilpris
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      <button class="fc-track group text-left bg-white rounded-[20px] border border-line hover:border-ink transition-colors duration-200 overflow-hidden focus:outline-none focus-visible:ring-4 focus-visible:ring-brand/20" data-track="B">
+        <span class="block relative h-[220px] sm:h-[260px] overflow-hidden">
+          <span class="fc-hero-b absolute inset-0"></span>
+          <span class="absolute top-5 left-6 text-[11px] font-bold tracking-[.14em] uppercase text-white/55">Spor B</span>
+          <svg class="absolute top-6 right-6 text-white/25" width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 3 12 6l3.5-3 4.5 2.2-2 5-2 .5V21H8V10.7l-2-.5-2-5z"/></svg>
+          <span class="absolute left-6 right-6 bottom-6 block text-[27px] sm:text-[32px] font-extrabold tracking-tight text-white leading-[1.12]">Firmatøj &amp;<br>tekstil merch</span>
+        </span>
+        <span class="block p-6 sm:p-7">
+          <span class="block text-[15px] text-ink-500 leading-relaxed">
+            Arbejdstøj, profilbeklædning og messe-merch — med materialevalg, forædlingsmetode og live sammenligning af tryk vs. broderi.
+          </span>
+          <span class="mt-4 block text-[13px] font-semibold text-ink-400">Marketing · Indkøb · Event</span>
+          <span class="mt-5 inline-flex items-center gap-2 text-[15px] font-bold text-brand group-hover:gap-3.5 transition-all">
+            Beregn tekstilpris
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </span>
         </span>
       </button>
     </div>
 
-    <div class="mt-8 flex flex-wrap gap-x-7 gap-y-3 text-[13px] text-slatey-500 font-medium">
-      <span class="flex items-center gap-2"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2A5C89" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Priser ex. moms — uden login</span>
-      <span class="flex items-center gap-2"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2A5C89" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Svar fra rådgiver inden for 1 hverdag</span>
-      <span class="flex items-center gap-2"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2A5C89" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Ingen binding</span>
+    <div class="mt-10 pt-8 border-t border-line flex flex-wrap gap-x-9 gap-y-3 text-[14px] text-ink-500 font-medium">
+      <span class="flex items-center gap-2.5"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E3002B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Priser ex. moms — uden login</span>
+      <span class="flex items-center gap-2.5"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E3002B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Svar fra rådgiver inden for 1 hverdag</span>
+      <span class="flex items-center gap-2.5"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E3002B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Ingen binding</span>
     </div>
   </section>
 
   <!-- ======================= TRIN 2: KONFIGURATOR ======================= -->
   <section id="fc-s2" class="fc-hide">
-    <button class="fc-back mb-6 text-[13px] font-semibold text-slatey-500 hover:text-navy-800 transition inline-flex items-center gap-1.5" data-to="1">
+    <button class="fc-back mb-7 text-[13px] font-semibold text-ink-500 hover:text-brand transition inline-flex items-center gap-1.5" data-to="1">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
       Skift spor
     </button>
 
-    <p class="text-[11px] font-bold tracking-[.16em] uppercase text-navy-600">Trin 2 af 4</p>
-    <h2 id="fc-s2-title" class="mt-2 text-[26px] sm:text-[32px] font-extrabold tracking-tight text-navy-950"></h2>
-    <p id="fc-s2-sub" class="mt-2.5 text-[15px] text-slatey-700 max-w-2xl leading-relaxed"></p>
+    <p class="text-[13px] uppercase tracking-[.09em] text-ink-400 font-medium">Trin 2 — konfigurér</p>
+    <h2 id="fc-s2-title" class="mt-3 text-[30px] sm:text-[38px] font-extrabold tracking-tight text-ink"></h2>
+    <p id="fc-s2-sub" class="mt-3 text-[16px] text-ink-500 max-w-[62ch] leading-relaxed"></p>
 
     <!-- ---------- SPOR A: GAVER ---------- -->
-    <div id="fc-form-A" class="fc-hide mt-8 space-y-7">
+    <div id="fc-form-A" class="fc-hide mt-9 space-y-6">
 
-      <!-- A1: Anledning -->
-      <div class="bg-white rounded-2xl border border-slatey-200 shadow-card p-6 sm:p-7">
-        <div class="flex items-baseline gap-3">
-          <span class="text-[11px] font-black text-navy-400">01</span>
-          <h3 class="text-[17px] font-bold text-navy-950">Hvad er anledningen?</h3>
+      <div class="bg-white rounded-[20px] border border-line p-6 sm:p-8">
+        <div class="flex items-baseline gap-3.5">
+          <span class="text-[12px] font-bold text-ink-300 fc-num">01</span>
+          <h3 class="text-[19px] font-bold tracking-tight text-ink">Hvad er anledningen?</h3>
         </div>
-        <div class="mt-5 grid sm:grid-cols-3 gap-3" data-field="occasion">
+        <div class="mt-6 grid sm:grid-cols-3 gap-3.5" data-field="occasion">
           <label class="fc-opt"><input type="radio" name="a-occasion" value="jul">
             <div class="fc-box"><div class="flex items-start justify-between gap-2">
-              <span class="font-bold text-[15px] text-navy-950">Julegave</span>
-              <svg class="fc-tick shrink-0" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1F4568" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
-              <p class="mt-1.5 text-[13px] text-slatey-500 leading-snug">Den årlige julegave til medarbejderne</p></div></label>
+              <span class="font-bold text-[15.5px] text-ink">Julegave</span>
+              <svg class="fc-tick shrink-0" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#E3002B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+              <p class="mt-2 text-[13.5px] text-ink-400 leading-snug">Den årlige julegave til medarbejderne</p></div></label>
           <label class="fc-opt"><input type="radio" name="a-occasion" value="jubi">
             <div class="fc-box"><div class="flex items-start justify-between gap-2">
-              <span class="font-bold text-[15px] text-navy-950">Jubilæum</span>
-              <svg class="fc-tick shrink-0" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1F4568" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
-              <p class="mt-1.5 text-[13px] text-slatey-500 leading-snug">Medarbejder- eller firmajubilæum</p></div></label>
+              <span class="font-bold text-[15.5px] text-ink">Jubilæum</span>
+              <svg class="fc-tick shrink-0" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#E3002B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+              <p class="mt-2 text-[13.5px] text-ink-400 leading-snug">Medarbejder- eller firmajubilæum</p></div></label>
           <label class="fc-opt"><input type="radio" name="a-occasion" value="kunde">
             <div class="fc-box"><div class="flex items-start justify-between gap-2">
-              <span class="font-bold text-[15px] text-navy-950">Kundegave</span>
-              <svg class="fc-tick shrink-0" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1F4568" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
-              <p class="mt-1.5 text-[13px] text-slatey-500 leading-snug">Relationsgave til kunder &amp; samarbejdspartnere</p></div></label>
+              <span class="font-bold text-[15.5px] text-ink">Kundegave</span>
+              <svg class="fc-tick shrink-0" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#E3002B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+              <p class="mt-2 text-[13.5px] text-ink-400 leading-snug">Relationsgave til kunder &amp; partnere</p></div></label>
         </div>
-        <div class="mt-5" data-kb="occasion"></div>
+        <div class="mt-6" data-kb="occasion"></div>
       </div>
 
-      <!-- A2: Antal + budget -->
-      <div class="bg-white rounded-2xl border border-slatey-200 shadow-card p-6 sm:p-7">
-        <div class="flex items-baseline gap-3">
-          <span class="text-[11px] font-black text-navy-400">02</span>
-          <h3 class="text-[17px] font-bold text-navy-950">Hvor mange modtagere?</h3>
+      <div class="bg-white rounded-[20px] border border-line p-6 sm:p-8">
+        <div class="flex items-baseline gap-3.5">
+          <span class="text-[12px] font-bold text-ink-300 fc-num">02</span>
+          <h3 class="text-[19px] font-bold tracking-tight text-ink">Hvor mange modtagere?</h3>
         </div>
-        <div class="mt-5 flex flex-wrap items-center gap-3">
+        <div class="mt-6 flex flex-wrap items-center gap-3">
           <div class="relative">
-            <input id="fc-a-qty" type="number" min="1" max="100000" value="100" class="fc-input !w-[150px] font-bold text-[17px] pr-14" aria-label="Antal modtagere">
-            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-[13px] font-semibold text-slatey-500 pointer-events-none">stk.</span>
+            <input id="fc-a-qty" type="number" min="1" max="100000" value="100" class="fc-input fc-num !w-[148px] font-bold text-[17px] !pr-14" aria-label="Antal modtagere">
+            <span class="absolute right-5 top-1/2 -translate-y-1/2 text-[13px] font-semibold text-ink-400 pointer-events-none">stk.</span>
           </div>
           <div class="flex flex-wrap gap-2" data-qtychips="fc-a-qty">
-            <button type="button" class="fc-chip" data-v="25">25</button>
-            <button type="button" class="fc-chip" data-v="50">50</button>
-            <button type="button" class="fc-chip" data-v="100">100</button>
-            <button type="button" class="fc-chip" data-v="250">250</button>
-            <button type="button" class="fc-chip" data-v="500">500</button>
+            <button type="button" class="fc-chip fc-num" data-v="25">25</button>
+            <button type="button" class="fc-chip fc-num" data-v="50">50</button>
+            <button type="button" class="fc-chip fc-num" data-v="100">100</button>
+            <button type="button" class="fc-chip fc-num" data-v="250">250</button>
+            <button type="button" class="fc-chip fc-num" data-v="500">500</button>
           </div>
         </div>
 
-        <div class="mt-8 flex items-baseline gap-3">
-          <span class="text-[11px] font-black text-navy-400">03</span>
-          <h3 class="text-[17px] font-bold text-navy-950">Budget-bånd pr. gave <span class="font-medium text-slatey-500 text-[14px]">(ex. moms)</span></h3>
+        <div class="mt-9 flex items-baseline gap-3.5">
+          <span class="text-[12px] font-bold text-ink-300 fc-num">03</span>
+          <h3 class="text-[19px] font-bold tracking-tight text-ink">Budget pr. gave <span class="font-medium text-ink-400 text-[15px]">(ex. moms)</span></h3>
         </div>
-        <div class="mt-5 grid sm:grid-cols-2 lg:grid-cols-4 gap-3" data-field="band">
+        <div class="mt-6 grid sm:grid-cols-2 lg:grid-cols-4 gap-3.5" data-field="band">
           <label class="fc-opt"><input type="radio" name="a-band" value="225">
             <div class="fc-box"><div class="flex items-start justify-between gap-2">
-              <span class="font-extrabold text-[19px] text-navy-950">225 kr.</span>
-              <svg class="fc-tick shrink-0 mt-1" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1F4568" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
-              <p class="mt-1 text-[12.5px] font-semibold text-navy-600">Entry</p>
-              <p class="mt-1.5 text-[13px] text-slatey-500 leading-snug">Vinsæt, plaid, mindre køkkenudstyr, kvalitetschokolade</p></div></label>
+              <span class="font-extrabold text-[21px] tracking-tight text-ink fc-num">225 kr.</span>
+              <svg class="fc-tick shrink-0 mt-1.5" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#E3002B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+              <p class="mt-1.5 text-[12.5px] font-bold uppercase tracking-[.08em] text-ink-400">Entry</p>
+              <p class="mt-2 text-[13.5px] text-ink-400 leading-snug">Vinsæt, plaid, mindre køkkenudstyr, kvalitetschokolade</p></div></label>
           <label class="fc-opt"><input type="radio" name="a-band" value="400">
             <div class="fc-box"><div class="flex items-start justify-between gap-2">
-              <span class="font-extrabold text-[19px] text-navy-950">400 kr.</span>
-              <svg class="fc-tick shrink-0 mt-1" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1F4568" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
-              <p class="mt-1 text-[12.5px] font-semibold text-navy-600">Standard</p>
-              <p class="mt-1.5 text-[13px] text-slatey-500 leading-snug">Køkkenknive, højttaler, dyner/håndklædesæt, gourmetkasse</p></div></label>
+              <span class="font-extrabold text-[21px] tracking-tight text-ink fc-num">400 kr.</span>
+              <svg class="fc-tick shrink-0 mt-1.5" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#E3002B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+              <p class="mt-1.5 text-[12.5px] font-bold uppercase tracking-[.08em] text-ink-400">Standard</p>
+              <p class="mt-2 text-[13.5px] text-ink-400 leading-snug">Køkkenknive, højttaler, håndklædesæt, gourmetkasse</p></div></label>
           <label class="fc-opt"><input type="radio" name="a-band" value="560">
             <div class="fc-box"><div class="flex items-start justify-between gap-2">
-              <span class="font-extrabold text-[19px] text-navy-950">560 kr.</span>
-              <svg class="fc-tick shrink-0 mt-1" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1F4568" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
-              <p class="mt-1 text-[12.5px] font-semibold text-navy-600">Premium <span class="text-gold-500">· skat-optimeret</span></p>
-              <p class="mt-1.5 text-[13px] text-slatey-500 leading-snug">Mærkevarer: gryder, kaffemaskine, tekstil, elektronik</p></div></label>
+              <span class="font-extrabold text-[21px] tracking-tight text-ink fc-num">560 kr.</span>
+              <svg class="fc-tick shrink-0 mt-1.5" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#E3002B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+              <p class="mt-1.5 text-[12.5px] font-bold uppercase tracking-[.08em] text-brand">Premium · skat-optimeret</p>
+              <p class="mt-2 text-[13.5px] text-ink-400 leading-snug">Mærkevarer: gryder, kaffemaskine, tekstil, elektronik</p></div></label>
           <label class="fc-opt"><input type="radio" name="a-band" value="800">
             <div class="fc-box"><div class="flex items-start justify-between gap-2">
-              <span class="font-extrabold text-[19px] text-navy-950">800+ kr.</span>
-              <svg class="fc-tick shrink-0 mt-1" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1F4568" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
-              <p class="mt-1 text-[12.5px] font-semibold text-navy-600">Exclusive</p>
-              <p class="mt-1.5 text-[13px] text-slatey-500 leading-snug">Design, oplevelser, større elektronik. Ledelse &amp; jubilæer</p></div></label>
+              <span class="font-extrabold text-[21px] tracking-tight text-ink fc-num">800+ kr.</span>
+              <svg class="fc-tick shrink-0 mt-1.5" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#E3002B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+              <p class="mt-1.5 text-[12.5px] font-bold uppercase tracking-[.08em] text-ink-400">Exclusive</p>
+              <p class="mt-2 text-[13.5px] text-ink-400 leading-snug">Design, oplevelser, elektronik. Ledelse &amp; jubilæer</p></div></label>
         </div>
-        <div id="fc-a-band-custom" class="fc-hide mt-4">
+        <div id="fc-a-band-custom" class="fc-hide mt-5">
           <label class="fc-lbl" for="fc-a-bandval">Ønsket gaveværdi pr. person (ex. moms)</label>
           <div class="relative max-w-[220px]">
-            <input id="fc-a-bandval" type="number" min="800" step="50" value="800" class="fc-input font-bold pr-12">
-            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-[13px] font-semibold text-slatey-500 pointer-events-none">kr.</span>
+            <input id="fc-a-bandval" type="number" min="800" step="50" value="800" class="fc-input fc-num font-bold !pr-14">
+            <span class="absolute right-5 top-1/2 -translate-y-1/2 text-[13px] font-semibold text-ink-400 pointer-events-none">kr.</span>
           </div>
         </div>
 
-        <div id="fc-tax-live" class="fc-hide mt-6 rounded-xl border border-slatey-200 bg-slatey-50 p-5"></div>
-        <div class="mt-5" data-kb="band"></div>
+        <div id="fc-tax-live" class="fc-hide mt-7 rounded-[16px] bg-mist p-6"></div>
+        <div class="mt-6" data-kb="band"></div>
       </div>
 
-      <!-- A3: Løsning + levering -->
-      <div class="bg-white rounded-2xl border border-slatey-200 shadow-card p-6 sm:p-7">
-        <div class="flex items-baseline gap-3">
-          <span class="text-[11px] font-black text-navy-400">04</span>
-          <h3 class="text-[17px] font-bold text-navy-950">Hvordan skal gaven leveres?</h3>
+      <div class="bg-white rounded-[20px] border border-line p-6 sm:p-8">
+        <div class="flex items-baseline gap-3.5">
+          <span class="text-[12px] font-bold text-ink-300 fc-num">04</span>
+          <h3 class="text-[19px] font-bold tracking-tight text-ink">Hvordan skal gaven leveres?</h3>
         </div>
 
-        <p class="fc-lbl mt-5">Gaveløsning</p>
-        <div class="grid sm:grid-cols-2 gap-3" data-field="solution">
+        <p class="fc-lbl mt-6">Gaveløsning</p>
+        <div class="grid sm:grid-cols-2 gap-3.5" data-field="solution">
           <label class="fc-opt"><input type="radio" name="a-solution" value="fast" checked>
             <div class="fc-box"><div class="flex items-start justify-between gap-2">
-              <span class="font-bold text-[15px] text-navy-950">Kurateret fast gave</span>
-              <svg class="fc-tick shrink-0" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1F4568" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
-              <p class="mt-1.5 text-[13px] text-slatey-500 leading-snug">Én gave til alle. Laveste stykpris, hurtigste proces.</p></div></label>
+              <span class="font-bold text-[15.5px] text-ink">Kurateret fast gave</span>
+              <svg class="fc-tick shrink-0" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#E3002B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+              <p class="mt-2 text-[13.5px] text-ink-400 leading-snug">Én gave til alle. Laveste stykpris, hurtigste proces.</p></div></label>
           <label class="fc-opt"><input type="radio" name="a-solution" value="portal">
             <div class="fc-box"><div class="flex items-start justify-between gap-2">
-              <span class="font-bold text-[15px] text-navy-950">Vælg-selv portal</span>
-              <svg class="fc-tick shrink-0" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1F4568" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
-              <p class="mt-1.5 text-[13px] text-slatey-500 leading-snug">Modtageren vælger selv i et lukket, kurateret udvalg.</p></div></label>
+              <span class="font-bold text-[15.5px] text-ink">Vælg-selv portal</span>
+              <svg class="fc-tick shrink-0" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#E3002B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+              <p class="mt-2 text-[13.5px] text-ink-400 leading-snug">Modtageren vælger selv i et lukket, kurateret udvalg.</p></div></label>
         </div>
-        <div class="mt-5" data-kb="solution"></div>
+        <div class="mt-6" data-kb="solution"></div>
 
-        <p class="fc-lbl mt-7">Levering</p>
-        <div class="grid sm:grid-cols-2 gap-3" data-field="delivery">
+        <p class="fc-lbl mt-8">Levering</p>
+        <div class="grid sm:grid-cols-2 gap-3.5" data-field="delivery">
           <label class="fc-opt"><input type="radio" name="a-delivery" value="samlet" checked>
             <div class="fc-box"><div class="flex items-start justify-between gap-2">
-              <span class="font-bold text-[15px] text-navy-950">Samlet til én adresse</span>
-              <svg class="fc-tick shrink-0" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1F4568" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
-              <p class="mt-1.5 text-[13px] text-slatey-500 leading-snug">Paller/kasser til jeres lager eller kontor.</p></div></label>
+              <span class="font-bold text-[15.5px] text-ink">Samlet til én adresse</span>
+              <svg class="fc-tick shrink-0" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#E3002B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+              <p class="mt-2 text-[13.5px] text-ink-400 leading-snug">Paller eller kasser til jeres lager eller kontor.</p></div></label>
           <label class="fc-opt"><input type="radio" name="a-delivery" value="hjem">
             <div class="fc-box"><div class="flex items-start justify-between gap-2">
-              <span class="font-bold text-[15px] text-navy-950">Direkte til hjemmeadresser</span>
-              <svg class="fc-tick shrink-0" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1F4568" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
-              <p class="mt-1.5 text-[13px] text-slatey-500 leading-snug">Individuel pluk/pak &amp; forsendelse pr. modtager.</p></div></label>
+              <span class="font-bold text-[15.5px] text-ink">Til hjemmeadresser</span>
+              <svg class="fc-tick shrink-0" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#E3002B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+              <p class="mt-2 text-[13.5px] text-ink-400 leading-snug">Individuel pluk, pak og forsendelse pr. modtager.</p></div></label>
         </div>
 
-        <label class="fc-opt mt-4 block">
+        <label class="fc-opt mt-3.5 block">
           <input type="checkbox" id="fc-a-branding">
-          <div class="fc-box flex items-start gap-3">
-            <span class="mt-0.5 w-[18px] h-[18px] rounded border-[1.5px] border-slatey-300 grid place-items-center shrink-0">
-              <svg class="fc-tick" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1F4568" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          <div class="fc-box flex items-start gap-3.5">
+            <span class="mt-0.5 w-[19px] h-[19px] rounded-md border-[1.5px] border-line grid place-items-center shrink-0">
+              <svg class="fc-tick" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#E3002B" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
             </span>
-            <span><span class="font-bold text-[15px] text-navy-950">Tilføj branding af emballagen</span>
-            <p class="mt-1 text-[13px] text-slatey-500 leading-snug">Logo-sleeve på gaveæsken + personligt kort med hilsen fra ledelsen.</p></span>
+            <span><span class="font-bold text-[15.5px] text-ink">Tilføj branding af emballagen</span>
+            <p class="mt-1.5 text-[13.5px] text-ink-400 leading-snug">Logo-sleeve på gaveæsken og personligt kort med hilsen fra ledelsen.</p></span>
           </div>
         </label>
       </div>
     </div>
 
     <!-- ---------- SPOR B: TEKSTIL ---------- -->
-    <div id="fc-form-B" class="fc-hide mt-8 space-y-7">
+    <div id="fc-form-B" class="fc-hide mt-9 space-y-6">
 
-      <!-- B1: Anvendelse -->
-      <div class="bg-white rounded-2xl border border-slatey-200 shadow-card p-6 sm:p-7">
-        <div class="flex items-baseline gap-3">
-          <span class="text-[11px] font-black text-navy-400">01</span>
-          <h3 class="text-[17px] font-bold text-navy-950">Hvor skal tøjet bruges?</h3>
+      <div class="bg-white rounded-[20px] border border-line p-6 sm:p-8">
+        <div class="flex items-baseline gap-3.5">
+          <span class="text-[12px] font-bold text-ink-300 fc-num">01</span>
+          <h3 class="text-[19px] font-bold tracking-tight text-ink">Hvor skal tøjet bruges?</h3>
         </div>
-        <div class="mt-5 grid sm:grid-cols-3 gap-3" data-field="use">
+        <div class="mt-6 grid sm:grid-cols-3 gap-3.5" data-field="use">
           <label class="fc-opt"><input type="radio" name="b-use" value="haandvaerk">
             <div class="fc-box"><div class="flex items-start justify-between gap-2">
-              <span class="font-bold text-[15px] text-navy-950">Håndværk &amp; produktion</span>
-              <svg class="fc-tick shrink-0" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1F4568" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
-              <p class="mt-1.5 text-[13px] text-slatey-500 leading-snug">Hårdt slid, industrivask, ude i alt vejr</p></div></label>
+              <span class="font-bold text-[15.5px] text-ink leading-snug">Håndværk &amp; produktion</span>
+              <svg class="fc-tick shrink-0 mt-0.5" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#E3002B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+              <p class="mt-2 text-[13.5px] text-ink-400 leading-snug">Hårdt slid, industrivask, ude i alt vejr</p></div></label>
           <label class="fc-opt"><input type="radio" name="b-use" value="kontor">
             <div class="fc-box"><div class="flex items-start justify-between gap-2">
-              <span class="font-bold text-[15px] text-navy-950">Kontor &amp; kundekontakt</span>
-              <svg class="fc-tick shrink-0" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1F4568" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
-              <p class="mt-1.5 text-[13px] text-slatey-500 leading-snug">Repræsentativt look, komfort, ESG-dokumentation</p></div></label>
+              <span class="font-bold text-[15.5px] text-ink leading-snug">Kontor &amp; kundekontakt</span>
+              <svg class="fc-tick shrink-0 mt-0.5" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#E3002B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+              <p class="mt-2 text-[13.5px] text-ink-400 leading-snug">Repræsentativt look, komfort, ESG-dokumentation</p></div></label>
           <label class="fc-opt"><input type="radio" name="b-use" value="messe">
             <div class="fc-box"><div class="flex items-start justify-between gap-2">
-              <span class="font-bold text-[15px] text-navy-950">Messe &amp; giveaways</span>
-              <svg class="fc-tick shrink-0" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1F4568" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
-              <p class="mt-1.5 text-[13px] text-slatey-500 leading-snug">Volumen, synlighed og lav stykpris</p></div></label>
+              <span class="font-bold text-[15.5px] text-ink leading-snug">Messe &amp; giveaways</span>
+              <svg class="fc-tick shrink-0 mt-0.5" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#E3002B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+              <p class="mt-2 text-[13.5px] text-ink-400 leading-snug">Volumen, synlighed og lav stykpris</p></div></label>
         </div>
-        <div class="mt-5" data-kb="use"></div>
+        <div class="mt-6" data-kb="use"></div>
       </div>
 
-      <!-- B2: Produkt + kvalitet -->
-      <div id="fc-b-product-card" class="fc-hide bg-white rounded-2xl border border-slatey-200 shadow-card p-6 sm:p-7">
-        <div class="flex items-baseline gap-3">
-          <span class="text-[11px] font-black text-navy-400">02</span>
-          <h3 class="text-[17px] font-bold text-navy-950">Vælg produkt</h3>
+      <div id="fc-b-product-card" class="fc-hide bg-white rounded-[20px] border border-line p-6 sm:p-8">
+        <div class="flex items-baseline gap-3.5">
+          <span class="text-[12px] font-bold text-ink-300 fc-num">02</span>
+          <h3 class="text-[19px] font-bold tracking-tight text-ink">Vælg produkt</h3>
         </div>
-        <div id="fc-b-products" class="mt-5 grid sm:grid-cols-2 lg:grid-cols-4 gap-3" data-field="product"></div>
+        <div id="fc-b-products" class="mt-6 grid sm:grid-cols-2 lg:grid-cols-4 gap-3.5" data-field="product"></div>
 
-        <div class="mt-8 flex items-baseline gap-3">
-          <span class="text-[11px] font-black text-navy-400">03</span>
-          <h3 class="text-[17px] font-bold text-navy-950">Kvalitetsniveau</h3>
+        <div class="mt-9 flex items-baseline gap-3.5">
+          <span class="text-[12px] font-bold text-ink-300 fc-num">03</span>
+          <h3 class="text-[19px] font-bold tracking-tight text-ink">Kvalitetsniveau</h3>
         </div>
-        <div class="mt-5 grid sm:grid-cols-3 gap-3" data-field="quality">
+        <div class="mt-6 grid sm:grid-cols-3 gap-3.5" data-field="quality">
           <label class="fc-opt"><input type="radio" name="b-quality" value="basis">
             <div class="fc-box"><div class="flex items-start justify-between gap-2">
-              <span class="font-bold text-[15px] text-navy-950">Basis</span>
-              <svg class="fc-tick shrink-0" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1F4568" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
-              <p class="mt-1.5 text-[13px] text-slatey-500 leading-snug">Prisfokus. Fin til korte kampagner og giveaways.</p></div></label>
+              <span class="font-bold text-[15.5px] text-ink">Basis</span>
+              <svg class="fc-tick shrink-0" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#E3002B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+              <p class="mt-2 text-[13.5px] text-ink-400 leading-snug">Prisfokus. Fin til korte kampagner og giveaways.</p></div></label>
           <label class="fc-opt"><input type="radio" name="b-quality" value="premium">
             <div class="fc-box"><div class="flex items-start justify-between gap-2">
-              <span class="font-bold text-[15px] text-navy-950">Premium</span>
-              <svg class="fc-tick shrink-0" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1F4568" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
-              <p class="mt-1.5 text-[13px] text-slatey-500 leading-snug">Mærkevare, EU-lager, høj farveægthed &amp; efterkøb.</p></div></label>
+              <span class="font-bold text-[15.5px] text-ink">Premium</span>
+              <svg class="fc-tick shrink-0" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#E3002B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+              <p class="mt-2 text-[13.5px] text-ink-400 leading-snug">Mærkevare, EU-lager, høj farveægthed &amp; efterkøb.</p></div></label>
           <label class="fc-opt"><input type="radio" name="b-quality" value="gots">
             <div class="fc-box"><div class="flex items-start justify-between gap-2">
-              <span class="font-bold text-[15px] text-navy-950">Økologisk / GOTS</span>
-              <svg class="fc-tick shrink-0" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1F4568" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
-              <p class="mt-1.5 text-[13px] text-slatey-500 leading-snug">Certificeret bomuld/genanvendt polyester. CSRD-klar.</p></div></label>
+              <span class="font-bold text-[15.5px] text-ink leading-snug">Økologisk / GOTS</span>
+              <svg class="fc-tick shrink-0 mt-0.5" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#E3002B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+              <p class="mt-2 text-[13.5px] text-ink-400 leading-snug">Certificeret bomuld eller genanvendt polyester.</p></div></label>
         </div>
-        <div class="mt-5" data-kb="quality"></div>
+        <div class="mt-6" data-kb="quality"></div>
       </div>
 
-      <!-- B3: Forædling -->
-      <div id="fc-b-deco-card" class="fc-hide bg-white rounded-2xl border border-slatey-200 shadow-card p-6 sm:p-7">
-        <div class="flex items-baseline gap-3">
-          <span class="text-[11px] font-black text-navy-400">04</span>
-          <h3 class="text-[17px] font-bold text-navy-950">Forædlingsmetode</h3>
+      <div id="fc-b-deco-card" class="fc-hide bg-white rounded-[20px] border border-line p-6 sm:p-8">
+        <div class="flex items-baseline gap-3.5">
+          <span class="text-[12px] font-bold text-ink-300 fc-num">04</span>
+          <h3 class="text-[19px] font-bold tracking-tight text-ink">Forædlingsmetode</h3>
         </div>
-        <div class="mt-5 grid sm:grid-cols-3 gap-3" data-field="method">
+        <div class="mt-6 grid sm:grid-cols-3 gap-3.5" data-field="method">
           <label class="fc-opt"><input type="radio" name="b-method" value="transfer">
             <div class="fc-box"><div class="flex items-start justify-between gap-2">
-              <span class="font-bold text-[15px] text-navy-950">Transfertryk</span>
-              <svg class="fc-tick shrink-0" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1F4568" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
-              <p class="mt-1.5 text-[13px] text-slatey-500 leading-snug">Ingen opstart · fotorealistisk · små oplag</p></div></label>
+              <span class="font-bold text-[15.5px] text-ink">Transfertryk</span>
+              <svg class="fc-tick shrink-0" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#E3002B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+              <p class="mt-2 text-[13.5px] text-ink-400 leading-snug">Ingen opstart · fotorealistisk · små oplag</p></div></label>
           <label class="fc-opt"><input type="radio" name="b-method" value="silke">
             <div class="fc-box"><div class="flex items-start justify-between gap-2">
-              <span class="font-bold text-[15px] text-navy-950">Silketryk</span>
-              <svg class="fc-tick shrink-0" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1F4568" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
-              <p class="mt-1.5 text-[13px] text-slatey-500 leading-snug">Opstart pr. farve · billigst i store oplag</p></div></label>
+              <span class="font-bold text-[15.5px] text-ink">Silketryk</span>
+              <svg class="fc-tick shrink-0" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#E3002B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+              <p class="mt-2 text-[13.5px] text-ink-400 leading-snug">Opstart pr. farve · billigst i store oplag</p></div></label>
           <label class="fc-opt"><input type="radio" name="b-method" value="broderi">
             <div class="fc-box"><div class="flex items-start justify-between gap-2">
-              <span class="font-bold text-[15px] text-navy-950">Broderi</span>
-              <svg class="fc-tick shrink-0" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1F4568" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
-              <p class="mt-1.5 text-[13px] text-slatey-500 leading-snug">Eksklusivt look · slidstærkt · polo &amp; jakke</p></div></label>
+              <span class="font-bold text-[15.5px] text-ink">Broderi</span>
+              <svg class="fc-tick shrink-0" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#E3002B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+              <p class="mt-2 text-[13.5px] text-ink-400 leading-snug">Eksklusivt look · slidstærkt · polo &amp; jakke</p></div></label>
         </div>
-        <div class="mt-5" data-kb="method"></div>
+        <div class="mt-6" data-kb="method"></div>
 
-        <div class="mt-7 grid sm:grid-cols-2 gap-6">
+        <div class="mt-8 grid sm:grid-cols-2 gap-6">
           <div>
             <label class="fc-lbl" for="fc-b-placements">Antal placeringer (fx bryst + ryg)</label>
             <select id="fc-b-placements" class="fc-input">
@@ -463,57 +468,55 @@ tailwind.config = {
               <option value="3">3 farver</option>
               <option value="4">4 farver</option>
             </select>
-            <p class="mt-2 text-[12.5px] text-slatey-500">Hver farve kræver sin egen ramme — det er her opstartsprisen ligger.</p>
+            <p class="mt-2.5 text-[13px] text-ink-400">Hver farve kræver sin egen ramme — det er her opstartsprisen ligger.</p>
           </div>
         </div>
-        <div id="fc-b-warn" class="fc-hide mt-5"></div>
+        <div id="fc-b-warn" class="fc-hide mt-6"></div>
       </div>
 
-      <!-- B4: Antal -->
-      <div id="fc-b-qty-card" class="fc-hide bg-white rounded-2xl border border-slatey-200 shadow-card p-6 sm:p-7">
-        <div class="flex items-baseline gap-3">
-          <span class="text-[11px] font-black text-navy-400">05</span>
-          <h3 class="text-[17px] font-bold text-navy-950">Hvor mange enheder?</h3>
+      <div id="fc-b-qty-card" class="fc-hide bg-white rounded-[20px] border border-line p-6 sm:p-8">
+        <div class="flex items-baseline gap-3.5">
+          <span class="text-[12px] font-bold text-ink-300 fc-num">05</span>
+          <h3 class="text-[19px] font-bold tracking-tight text-ink">Hvor mange enheder?</h3>
         </div>
-        <div class="mt-5 flex flex-wrap items-center gap-3">
+        <div class="mt-6 flex flex-wrap items-center gap-3">
           <div class="relative">
-            <input id="fc-b-qty" type="number" min="1" max="100000" value="100" class="fc-input !w-[150px] font-bold text-[17px] pr-14" aria-label="Antal enheder">
-            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-[13px] font-semibold text-slatey-500 pointer-events-none">stk.</span>
+            <input id="fc-b-qty" type="number" min="1" max="100000" value="100" class="fc-input fc-num !w-[148px] font-bold text-[17px] !pr-14" aria-label="Antal enheder">
+            <span class="absolute right-5 top-1/2 -translate-y-1/2 text-[13px] font-semibold text-ink-400 pointer-events-none">stk.</span>
           </div>
           <div class="flex flex-wrap gap-2" data-qtychips="fc-b-qty">
-            <button type="button" class="fc-chip" data-v="25">25</button>
-            <button type="button" class="fc-chip" data-v="50">50</button>
-            <button type="button" class="fc-chip" data-v="100">100</button>
-            <button type="button" class="fc-chip" data-v="250">250</button>
-            <button type="button" class="fc-chip" data-v="500">500</button>
+            <button type="button" class="fc-chip fc-num" data-v="25">25</button>
+            <button type="button" class="fc-chip fc-num" data-v="50">50</button>
+            <button type="button" class="fc-chip fc-num" data-v="100">100</button>
+            <button type="button" class="fc-chip fc-num" data-v="250">250</button>
+            <button type="button" class="fc-chip fc-num" data-v="500">500</button>
           </div>
         </div>
-        <p class="mt-4 text-[13px] text-slatey-500 leading-relaxed">Antallet påvirker både stykpris på varen og fordelingen af engangsomkostninger til opstart.</p>
+        <p class="mt-5 text-[13.5px] text-ink-400 leading-relaxed">Antallet påvirker både stykprisen på varen og fordelingen af engangsomkostninger til opstart.</p>
       </div>
     </div>
 
-    <!-- CTA + sticky live-pris -->
-    <div class="mt-8">
-      <button id="fc-to-price" class="w-full sm:w-auto bg-navy-950 hover:bg-navy-800 disabled:bg-slatey-300 disabled:cursor-not-allowed text-white font-bold text-[15px] px-8 py-4 rounded-xl transition-colors inline-flex items-center justify-center gap-2.5 shadow-card" disabled>
+    <div class="mt-9">
+      <button id="fc-to-price" class="w-full sm:w-auto bg-brand hover:bg-brand-dark disabled:bg-line disabled:text-ink-300 disabled:cursor-not-allowed text-white font-bold text-[15.5px] px-9 py-4 rounded-full transition-colors inline-flex items-center justify-center gap-2.5" disabled>
         Vis min pris
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
       </button>
-      <p id="fc-to-price-hint" class="mt-3 text-[13px] text-slatey-500">Udfyld felterne ovenfor for at låse prisen op.</p>
+      <p id="fc-to-price-hint" class="mt-3.5 text-[13.5px] text-ink-400">Udfyld felterne ovenfor for at låse prisen op.</p>
     </div>
 
-    <div id="fc-sticky" class="fc-off mt-8 -mx-5 sm:-mx-8">
-      <div class="bg-navy-950 text-white px-5 sm:px-8 py-4 sm:rounded-t-2xl border-t-2 border-gold-500">
-        <div class="max-w-6xl mx-auto flex items-center justify-between gap-4 flex-wrap">
+    <div id="fc-sticky" class="fc-off mt-9 -mx-5 sm:-mx-8">
+      <div class="bg-ink text-white px-5 sm:px-8 py-4 sm:rounded-t-[20px]">
+        <div class="max-w-[1200px] mx-auto flex items-center justify-between gap-4 flex-wrap">
           <div>
-            <p class="text-[11px] font-bold tracking-[.14em] uppercase text-navy-300">Løbende estimat</p>
-            <p class="mt-1 text-[15px] font-semibold text-navy-100">
-              <span id="fc-sticky-unit" class="text-white font-extrabold text-[20px]">–</span>
-              <span class="text-navy-300 text-[13px]"> / stk. ex. moms</span>
-              <span class="text-navy-400 mx-2 hidden sm:inline">|</span>
-              <span class="block sm:inline text-[13px] text-navy-300">Total <span id="fc-sticky-total" class="text-white font-bold">–</span></span>
+            <p class="text-[11px] font-bold tracking-[.14em] uppercase text-white/50">Løbende estimat</p>
+            <p class="mt-1.5 text-[15px] font-semibold text-white/70">
+              <span id="fc-sticky-unit" class="text-brand-bright font-extrabold text-[22px] tracking-tight fc-num">–</span>
+              <span class="text-white/50 text-[13px]"> / stk. ex. moms</span>
+              <span class="text-white/25 mx-2 hidden sm:inline">|</span>
+              <span class="block sm:inline text-[13px] text-white/50">Total <span id="fc-sticky-total" class="text-white font-bold fc-num">–</span></span>
             </p>
           </div>
-          <button id="fc-sticky-cta" class="bg-gold-500 hover:bg-gold-400 text-navy-950 font-bold text-[14px] px-6 py-3 rounded-lg transition-colors shrink-0">
+          <button id="fc-sticky-cta" class="bg-white hover:bg-white/90 text-ink font-bold text-[14px] px-6 py-3 rounded-full transition-colors shrink-0">
             Se fuld prisberegning
           </button>
         </div>
@@ -523,133 +526,130 @@ tailwind.config = {
 
   <!-- ======================= TRIN 3 + 4: PRIS OG LEAD ======================= -->
   <section id="fc-s3" class="fc-hide">
-    <button class="fc-back mb-6 text-[13px] font-semibold text-slatey-500 hover:text-navy-800 transition inline-flex items-center gap-1.5" data-to="2">
+    <button class="fc-back mb-7 text-[13px] font-semibold text-ink-500 hover:text-brand transition inline-flex items-center gap-1.5" data-to="2">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
       Justér konfigurationen
     </button>
 
-    <p class="text-[11px] font-bold tracking-[.16em] uppercase text-navy-600">Trin 3 af 4 — åben pris</p>
-    <h2 class="mt-2 text-[26px] sm:text-[32px] font-extrabold tracking-tight text-navy-950">Her er din pris.<span class="text-slatey-500 font-bold"> Ingen e-mail påkrævet.</span></h2>
+    <p class="text-[13px] uppercase tracking-[.09em] text-ink-400 font-medium">Trin 3 — åben pris</p>
+    <h2 class="mt-3 text-[30px] sm:text-[38px] font-extrabold tracking-tight text-ink">Her er din pris.
+      <span class="text-ink-400">Ingen e-mail påkrævet.</span></h2>
 
-    <!-- PRISKORT -->
-    <div class="mt-7 bg-navy-950 text-white rounded-2xl overflow-hidden shadow-card">
-      <div class="p-6 sm:p-9">
-        <p id="fc-price-config" class="text-[13px] text-navy-300 leading-relaxed"></p>
+    <!-- PRISPANEL — sidens ene mørke flade -->
+    <div class="mt-8 bg-ink text-white rounded-[20px] overflow-hidden">
+      <div class="p-6 sm:p-10">
+        <p id="fc-price-config" class="text-[13.5px] text-white/55 leading-relaxed"></p>
 
-        <div class="mt-6 grid sm:grid-cols-2 gap-6 sm:gap-8">
-          <div class="bg-white/5 rounded-xl p-5 border border-white/10">
-            <p class="text-[11px] font-bold tracking-[.14em] uppercase text-navy-300">Stykpris ex. moms</p>
-            <p class="mt-2"><span id="fc-price-unit" class="text-[38px] sm:text-[44px] font-extrabold tracking-tight leading-none text-gold-500">–</span></p>
-            <p class="mt-2 text-[13px] text-navy-300">Alt inkluderet: vare, forædling/emballage, opstart og logistik.</p>
+        <div class="mt-7 grid sm:grid-cols-2 gap-5">
+          <div class="rounded-[16px] bg-white/[.06] p-6">
+            <p class="text-[11px] font-bold tracking-[.14em] uppercase text-white/50">Stykpris ex. moms</p>
+            <p class="mt-2.5"><span id="fc-price-unit" class="text-[40px] sm:text-[48px] font-extrabold tracking-tight leading-none text-brand-bright fc-num">–</span></p>
+            <p class="mt-3 text-[13.5px] text-white/55 leading-relaxed">Alt inkluderet: vare, forædling eller emballage, opstart og logistik.</p>
           </div>
-          <div class="bg-white/5 rounded-xl p-5 border border-white/10">
-            <p class="text-[11px] font-bold tracking-[.14em] uppercase text-navy-300">Totalpris ex. moms</p>
-            <p class="mt-2"><span id="fc-price-total" class="text-[38px] sm:text-[44px] font-extrabold tracking-tight leading-none text-white">–</span></p>
-            <p id="fc-price-vat" class="mt-2 text-[13px] text-navy-300"></p>
+          <div class="rounded-[16px] bg-white/[.06] p-6">
+            <p class="text-[11px] font-bold tracking-[.14em] uppercase text-white/50">Totalpris ex. moms</p>
+            <p class="mt-2.5"><span id="fc-price-total" class="text-[40px] sm:text-[48px] font-extrabold tracking-tight leading-none text-white fc-num">–</span></p>
+            <p id="fc-price-vat" class="mt-3 text-[13.5px] text-white/55 leading-relaxed"></p>
           </div>
         </div>
 
-        <!-- Specifikation -->
-        <div class="mt-7">
-          <p class="text-[11px] font-bold tracking-[.14em] uppercase text-navy-300 mb-2">Sådan er prisen sammensat</p>
-          <div class="rounded-xl border border-white/10 overflow-hidden">
-            <table class="fc-tbl w-full text-left">
-              <tbody id="fc-price-rows" class="text-navy-100"></tbody>
-            </table>
+        <div class="mt-8">
+          <p class="text-[11px] font-bold tracking-[.14em] uppercase text-white/50 mb-3">Sådan er prisen sammensat</p>
+          <div class="rounded-[16px] border border-white/10 overflow-hidden">
+            <table class="fc-tbl w-full text-left"><tbody id="fc-price-rows"></tbody></table>
           </div>
         </div>
 
         <div id="fc-price-notes" class="mt-6 space-y-3"></div>
       </div>
 
-      <div class="bg-white/[.04] border-t border-white/10 px-6 sm:px-9 py-4">
-        <p class="text-[12.5px] text-navy-300 leading-relaxed">
-          Prisen er et <strong class="text-white font-semibold">markedsrealistisk estimat</strong> baseret på dine valg og gældende
-          indkøbspriser. Endelig pris fastlægges ved konkret produktvalg, logo-materiale og leveringstid — typisk ±8 %.
+      <div class="border-t border-white/10 px-6 sm:px-10 py-5">
+        <p class="text-[13px] text-white/50 leading-relaxed">
+          Prisen er et <strong class="text-white/85 font-semibold">markedsrealistisk estimat</strong> baseret på dine valg og
+          gældende indkøbspriser. Endelig pris fastlægges ved konkret produktvalg, logo-materiale og leveringstid — typisk ±8 %.
         </p>
       </div>
     </div>
 
     <!-- METODE-SAMMENLIGNING (kun spor B) -->
-    <div id="fc-compare" class="fc-hide mt-7 bg-white rounded-2xl border border-slatey-200 shadow-card p-6 sm:p-7">
-      <h3 class="text-[17px] font-bold text-navy-950">Hvad ville de andre metoder koste?</h3>
-      <p class="mt-1.5 text-[14px] text-slatey-700">Samme produkt, samme antal — kun forædlingen er skiftet. Så kan du selv se, hvor break-even ligger.</p>
-      <div class="mt-5 overflow-x-auto">
-        <table class="w-full text-left border-collapse min-w-[520px]">
+    <div id="fc-compare" class="fc-hide mt-6 bg-white rounded-[20px] border border-line p-6 sm:p-8">
+      <h3 class="text-[19px] font-bold tracking-tight text-ink">Hvad ville de andre metoder koste?</h3>
+      <p class="mt-2 text-[15px] text-ink-500 leading-relaxed">Samme produkt, samme antal — kun forædlingen er skiftet. Så kan du selv se, hvor break-even ligger.</p>
+      <div class="mt-6 overflow-x-auto">
+        <table class="w-full text-left border-collapse min-w-[540px]">
           <thead>
-            <tr class="text-[11px] font-bold tracking-[.1em] uppercase text-slatey-500">
-              <th class="pb-3 pr-4">Metode</th>
-              <th class="pb-3 pr-4">Opstart (engangs)</th>
-              <th class="pb-3 pr-4">Forædling pr. stk.</th>
-              <th class="pb-3">Stykpris i alt</th>
+            <tr class="text-[11px] font-bold tracking-[.11em] uppercase text-ink-400">
+              <th class="pb-3.5 pr-4">Metode</th>
+              <th class="pb-3.5 pr-4">Opstart (engangs)</th>
+              <th class="pb-3.5 pr-4">Forædling pr. stk.</th>
+              <th class="pb-3.5">Stykpris i alt</th>
             </tr>
           </thead>
-          <tbody id="fc-compare-rows" class="text-[14px]"></tbody>
+          <tbody id="fc-compare-rows" class="text-[14.5px]"></tbody>
         </table>
       </div>
-      <p id="fc-compare-tip" class="mt-5 text-[13.5px]"></p>
+      <p id="fc-compare-tip" class="mt-6 text-[14px] leading-relaxed"></p>
     </div>
 
     <!-- ================= TRIN 4: LEAD-FORMULAR ================= -->
-    <div id="fc-lead" class="mt-7 bg-white rounded-2xl border-[1.5px] border-navy-700 shadow-card overflow-hidden">
-      <div class="bg-navy-100 px-6 sm:px-9 py-3 border-b border-navy-300/40">
-        <p class="text-[11px] font-bold tracking-[.16em] uppercase text-navy-700">Trin 4 af 4 — næste skridt</p>
+    <div id="fc-lead" class="mt-6 bg-white rounded-[20px] border-2 border-ink overflow-hidden">
+      <div class="bg-ink px-6 sm:px-10 py-3.5">
+        <p class="text-[11px] font-bold tracking-[.14em] uppercase text-white/60">Trin 4 — næste skridt</p>
       </div>
-      <div class="p-6 sm:p-9">
-        <h3 id="fc-lead-title" class="text-[22px] sm:text-[26px] font-extrabold tracking-tight text-navy-950 leading-snug"></h3>
-        <p id="fc-lead-sub" class="mt-3 text-[15px] text-slatey-700 leading-relaxed max-w-2xl"></p>
-        <ul id="fc-lead-bullets" class="mt-5 grid sm:grid-cols-2 gap-x-8 gap-y-2.5 max-w-2xl"></ul>
+      <div class="p-6 sm:p-10">
+        <h3 id="fc-lead-title" class="text-[24px] sm:text-[30px] font-extrabold tracking-tight text-ink leading-[1.18] max-w-[24ch] text-balance"></h3>
+        <p id="fc-lead-sub" class="mt-4 text-[16px] text-ink-500 leading-relaxed max-w-[62ch]"></p>
+        <ul id="fc-lead-bullets" class="mt-6 grid sm:grid-cols-2 gap-x-9 gap-y-3 max-w-[62ch]"></ul>
 
-        <form id="fc-form" class="mt-7 max-w-2xl" novalidate>
-          <div class="grid sm:grid-cols-2 gap-4">
+        <form id="fc-form" class="mt-8 max-w-[640px]" novalidate>
+          <div class="grid sm:grid-cols-2 gap-5">
             <div>
-              <label class="fc-lbl" for="fc-company">Firmanavn <span class="text-red-500">*</span></label>
+              <label class="fc-lbl" for="fc-company">Firmanavn <span class="text-brand">*</span></label>
               <input id="fc-company" name="company" type="text" class="fc-input" placeholder="Freeconcept ApS" autocomplete="organization">
-              <p class="fc-msg mt-1.5 text-[12.5px] text-red-600 fc-hide"></p>
+              <p class="fc-msg mt-2 ml-1 text-[12.5px] font-medium text-brand fc-hide"></p>
             </div>
             <div>
               <label class="fc-lbl" for="fc-name">Dit navn</label>
               <input id="fc-name" name="name" type="text" class="fc-input" placeholder="Fornavn Efternavn" autocomplete="name">
             </div>
             <div>
-              <label class="fc-lbl" for="fc-email">Arbejds-e-mail <span class="text-red-500">*</span></label>
+              <label class="fc-lbl" for="fc-email">Arbejds-e-mail <span class="text-brand">*</span></label>
               <input id="fc-email" name="email" type="email" class="fc-input" placeholder="navn@firma.dk" autocomplete="email" inputmode="email">
-              <p class="fc-msg mt-1.5 text-[12.5px] text-red-600 fc-hide"></p>
+              <p class="fc-msg mt-2 ml-1 text-[12.5px] font-medium text-brand fc-hide"></p>
             </div>
             <div>
-              <label class="fc-lbl" for="fc-phone">Telefon <span class="text-red-500">*</span></label>
+              <label class="fc-lbl" for="fc-phone">Telefon <span class="text-brand">*</span></label>
               <input id="fc-phone" name="phone" type="tel" class="fc-input" placeholder="+45 12 34 56 78" autocomplete="tel" inputmode="tel">
-              <p class="fc-msg mt-1.5 text-[12.5px] text-red-600 fc-hide"></p>
+              <p class="fc-msg mt-2 ml-1 text-[12.5px] font-medium text-brand fc-hide"></p>
             </div>
           </div>
 
-          <!-- Logo-upload (kun spor B) -->
-          <div id="fc-upload-wrap" class="fc-hide mt-4">
-            <label class="fc-lbl" for="fc-logo">Logo til 3D-mockup <span class="font-normal text-slatey-500">(valgfrit — AI, EPS, PDF, SVG eller PNG, maks. 10 MB)</span></label>
-            <label for="fc-logo" class="block border-[1.5px] border-dashed border-slatey-300 hover:border-navy-500 hover:bg-slatey-50 rounded-xl px-5 py-6 text-center cursor-pointer transition">
-              <svg class="mx-auto text-navy-500" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v13"/></svg>
-              <span id="fc-logo-label" class="mt-2.5 block text-[14px] font-semibold text-navy-800">Vælg fil eller træk den hertil</span>
-              <span class="mt-1 block text-[12.5px] text-slatey-500">Vektorfil giver den skarpeste mockup — men et PNG er fint til at komme i gang.</span>
+          <div id="fc-upload-wrap" class="fc-hide mt-5">
+            <label class="fc-lbl" for="fc-logo">Logo til 3D-mockup <span class="font-normal text-ink-400">(valgfrit — AI, EPS, PDF, SVG eller PNG, maks. 10 MB)</span></label>
+            <label for="fc-logo" class="block border-[1.5px] border-dashed border-line hover:border-brand hover:bg-mist rounded-[20px] px-5 py-7 text-center cursor-pointer transition">
+              <svg class="mx-auto text-brand" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v13"/></svg>
+              <span id="fc-logo-label" class="mt-3 block text-[14.5px] font-semibold text-ink">Vælg fil eller træk den hertil</span>
+              <span class="mt-1.5 block text-[13px] text-ink-400">Vektorfil giver den skarpeste mockup — men et PNG er fint til at komme i gang.</span>
             </label>
             <input id="fc-logo" name="logo" type="file" class="fc-hide" accept=".ai,.eps,.pdf,.svg,.png,.jpg,.jpeg">
-            <p class="fc-msg mt-1.5 text-[12.5px] text-red-600 fc-hide"></p>
+            <p class="fc-msg mt-2 ml-1 text-[12.5px] font-medium text-brand fc-hide"></p>
           </div>
 
-          <div class="mt-4">
-            <label class="fc-lbl" for="fc-note">Kommentar <span class="font-normal text-slatey-500">(valgfrit)</span></label>
+          <div class="mt-5">
+            <label class="fc-lbl" for="fc-note">Kommentar <span class="font-normal text-ink-400">(valgfrit)</span></label>
             <textarea id="fc-note" name="note" rows="2" class="fc-input resize-y" placeholder="Fx ønsket leveringsdato, farver eller særlige krav"></textarea>
           </div>
 
-          <label class="flex items-start gap-3 mt-5 cursor-pointer">
-            <input id="fc-consent" type="checkbox" class="mt-1 w-[17px] h-[17px] accent-navy-800 shrink-0">
-            <span class="text-[13px] text-slatey-700 leading-relaxed">
+          <label class="flex items-start gap-3.5 mt-6 cursor-pointer">
+            <input id="fc-consent" type="checkbox" class="mt-0.5 w-[18px] h-[18px] accent-brand shrink-0">
+            <span class="text-[13.5px] text-ink-500 leading-relaxed">
               Ja tak — send mig materialet, og kontakt mig om denne forespørgsel. Mine oplysninger behandles fortroligt
-              efter Freeconcepts privatlivspolitik og videregives ikke til tredjepart. <span class="text-red-500">*</span>
+              efter Freeconcepts privatlivspolitik og videregives ikke til tredjepart. <span class="text-brand">*</span>
             </span>
           </label>
-          <p id="fc-consent-msg" class="fc-msg mt-1.5 text-[12.5px] text-red-600 fc-hide"></p>
+          <p id="fc-consent-msg" class="fc-msg mt-2 ml-8 text-[12.5px] font-medium text-brand fc-hide"></p>
 
-          <!-- Skjulte felter: hele konfigurationen følger med leadet -->
+          <!-- Hele konfigurationen følger med leadet -->
           <input type="hidden" name="fc_track" id="fc-h-track">
           <input type="hidden" name="fc_config" id="fc-h-config">
           <input type="hidden" name="fc_unit_price" id="fc-h-unit">
@@ -657,11 +657,11 @@ tailwind.config = {
           <input type="hidden" name="fc_quantity" id="fc-h-qty">
           <input type="hidden" name="fc_source" value="Prisberegner (web)">
 
-          <button type="submit" id="fc-submit" class="mt-7 w-full sm:w-auto bg-gold-500 hover:bg-gold-400 text-navy-950 font-extrabold text-[15.5px] px-9 py-4 rounded-xl transition-colors inline-flex items-center justify-center gap-2.5 shadow-card">
+          <button type="submit" id="fc-submit" class="mt-8 w-full sm:w-auto bg-brand hover:bg-brand-dark text-white font-bold text-[16px] px-10 py-4 rounded-full transition-colors inline-flex items-center justify-center gap-2.5">
             <span id="fc-submit-label">Send mig materialet</span>
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
           </button>
-          <p class="mt-3 text-[12.5px] text-slatey-500">Svar fra en rådgiver inden for 1 hverdag. Ingen automatiske nyhedsbreve.</p>
+          <p class="mt-3.5 text-[13px] text-ink-400">Svar fra en rådgiver inden for 1 hverdag. Ingen automatiske nyhedsbreve.</p>
         </form>
       </div>
     </div>
@@ -669,24 +669,38 @@ tailwind.config = {
 
   <!-- ======================= KVITTERING ======================= -->
   <section id="fc-s4" class="fc-hide">
-    <div class="bg-white rounded-2xl border border-slatey-200 shadow-card p-8 sm:p-12 text-center max-w-2xl mx-auto">
-      <div class="w-16 h-16 rounded-full bg-navy-100 grid place-items-center mx-auto">
-        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#1F4568" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+    <div class="max-w-[680px] mx-auto text-center py-6">
+      <div class="w-16 h-16 rounded-full bg-brand grid place-items-center mx-auto">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
       </div>
-      <h2 class="mt-6 text-[26px] sm:text-[30px] font-extrabold tracking-tight text-navy-950">Tak — det er sendt.</h2>
-      <p id="fc-done-text" class="mt-3 text-[15px] text-slatey-700 leading-relaxed"></p>
-      <div class="mt-7 rounded-xl bg-slatey-50 border border-slatey-200 p-5 text-left">
-        <p class="text-[11px] font-bold tracking-[.14em] uppercase text-slatey-500">Din beregning</p>
-        <p id="fc-done-summary" class="mt-2 text-[14px] text-navy-900 leading-relaxed font-medium"></p>
+      <h2 class="mt-7 text-[30px] sm:text-[38px] font-extrabold tracking-tight text-ink">Tak — det er sendt.</h2>
+      <p id="fc-done-text" class="mt-4 text-[16px] text-ink-500 leading-relaxed"></p>
+
+      <div class="mt-8 rounded-[20px] bg-mist p-6 text-left">
+        <p class="text-[11px] font-bold tracking-[.14em] uppercase text-ink-400">Din beregning</p>
+        <p id="fc-done-summary" class="mt-2.5 text-[14.5px] text-ink leading-relaxed font-medium"></p>
       </div>
-      <button id="fc-again" class="mt-7 text-[14px] font-bold text-navy-700 hover:text-navy-950 transition">Lav en ny beregning</button>
+
+      <!-- Kunderejsen fortsætter: tilbage i sortimentet mens de venter på svar -->
+      <p class="mt-9 text-[14px] font-semibold text-ink-400">Kig videre imens</p>
+      <div class="mt-3.5 flex flex-wrap justify-center gap-3">
+        <a id="fc-link-textile" href="#" class="inline-flex items-center gap-2 border border-line hover:border-ink rounded-full px-6 py-3 text-[14.5px] font-bold text-ink transition-colors">
+          Se firmatøj
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+        <a id="fc-link-merch" href="#" class="inline-flex items-center gap-2 border border-line hover:border-ink rounded-full px-6 py-3 text-[14.5px] font-bold text-ink transition-colors">
+          Se merchandise
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+      </div>
+      <button id="fc-again" class="mt-8 text-[14px] font-bold text-brand hover:text-brand-dark transition">Lav en ny beregning</button>
     </div>
   </section>
 
   </main>
 
-  <footer class="border-t border-slatey-200 mt-6">
-    <div class="max-w-6xl mx-auto px-5 sm:px-8 py-7 text-[12.5px] text-slatey-500 leading-relaxed">
+  <footer class="border-t border-line">
+    <div class="max-w-[1200px] mx-auto px-5 sm:px-8 py-8 text-[13px] text-ink-400 leading-relaxed">
       Alle priser er vejledende og ex. moms. Skatteoplysninger er generel information for indkomståret 2026 og
       erstatter ikke rådgivning fra din revisor. © <span id="fc-year"></span> Freeconcept.
     </div>
@@ -698,8 +712,12 @@ tailwind.config = {
 'use strict';
 
 /* ============================================================
-   1) KONFIGURATION — tilpas disse to blokke til jeres setup
+   0) LINKS — peg på jeres egne kategorisider
    ============================================================ */
+const FC_LINKS = {
+  textile: '/firmatoj',      // TILPAS: URL til kategorien Firmatøj
+  merch:   '/merchandise'    // TILPAS: URL til kategorien Merchandise
+};
 
 const FC_CONFIG = {
   // Sæt jeres endpoint her (Formspree, HubSpot, WP admin-ajax, eget API).
@@ -876,19 +894,29 @@ const tier = (tiers, q) => { let v = tiers[0][1]; for (const t of tiers) { if (q
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 function kbBox(title, html){
-  return '<div class="fc-kb"><h4>Ekspert-viden</h4>'
-       + '<p class="!mt-1.5 !text-[15px] !font-bold !text-navy-950 !leading-snug">' + title + '</p>'
+  return '<div class="fc-kb"><h4>Ekspertviden</h4>'
+       + '<p class="!mt-2 !text-[16px] !font-bold !text-ink !leading-snug">' + title + '</p>'
        + '<div class="mt-2 space-y-2">' + html + '</div></div>';
 }
+
+/* Note på det mørke prispanel */
 function noteBox(tone, title, html){
-  const map = {
-    info: ['bg-white/5 border-white/15','text-navy-100','#93BFE2'],
-    warn: ['bg-gold-100/10 border-gold-500/40','text-gold-400','#F0BC50']
-  }[tone] || ['bg-white/5 border-white/15','text-navy-100','#93BFE2'];
-  return '<div class="rounded-xl border ' + map[0] + ' p-4 flex gap-3">'
-    + '<svg class="shrink-0 mt-0.5" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="' + map[2] + '" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.4"/></svg>'
-    + '<div><p class="text-[13.5px] font-bold ' + map[1] + '">' + title + '</p>'
-    + '<p class="mt-1 text-[13px] text-navy-200 leading-relaxed">' + html + '</p></div></div>';
+  const stroke = tone === 'warn' ? '#FF4152' : 'rgba(255,255,255,.55)';
+  return '<div class="rounded-[16px] bg-white/[.06] border border-white/10 p-5 flex gap-3.5">'
+    + '<svg class="shrink-0 mt-0.5" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="' + stroke + '" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.4"/></svg>'
+    + '<div><p class="text-[14px] font-bold ' + (tone === 'warn' ? 'text-brand-bright' : 'text-white') + '">' + title + '</p>'
+    + '<p class="mt-1.5 text-[13.5px] text-white/60 leading-relaxed">' + html + '</p></div></div>';
+}
+
+/* Advarsel i konfiguratoren (lys flade) */
+function warnBox(tone, title, html){
+  const c = tone === 'warn'
+    ? ['border-brand bg-brand-tint', '#E3002B', 'text-brand-dark']
+    : ['border-ink bg-mist', '#131313', 'text-ink'];
+  return '<div class="rounded-[16px] border-l-[3px] ' + c[0] + ' p-5 flex gap-3.5 fc-in">'
+    + '<svg class="shrink-0 mt-0.5" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="' + c[1] + '" stroke-width="2.2" stroke-linecap="round"><path d="M12 9v4M12 17v.01"/><path d="M10.3 3.9 2.4 17.5A2 2 0 0 0 4.1 20.5h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>'
+    + '<div><p class="text-[14.5px] font-bold ' + c[2] + '">' + title + '</p>'
+    + '<p class="mt-1.5 text-[14px] text-ink-500 leading-relaxed">' + html + '</p></div></div>';
 }
 
 /* ============================================================
@@ -912,8 +940,7 @@ function bandValue(){
 function calcGifts(){
   const P = FC_PRICING.gifts, q = Math.max(1, S.a.qty), val = bandValue();
   const rows = [];
-  const gift = val * q;
-  rows.push({ label:'Gaveværdi', detail:kr(val) + ' × ' + nf0.format(q) + ' stk.', amount:gift });
+  rows.push({ label:'Gaveværdi', detail:kr(val) + ' × ' + nf0.format(q) + ' stk.', amount:val * q });
 
   const pack = tier(P.packaging, q);
   rows.push({ label:'Gaveæske, pakning &amp; håndtering', detail:kr(pack) + ' pr. gave', amount:pack * q });
@@ -922,21 +949,21 @@ function calcGifts(){
   let setup = 0, setupLabel = '';
   if (S.a.solution === 'portal') {
     setup = q >= P.portalSetupFreeFrom ? 0 : P.portalSetup;
-    setupLabel = 'Opsætning af vælg-selv portal' + (setup === 0 ? ' <span class="text-gold-500 font-semibold">(gratis fra ' + P.portalSetupFreeFrom + ' modtagere)</span>' : '');
+    setupLabel = 'Opsætning af vælg-selv portal' + (setup === 0 ? ' <span class="text-brand-bright font-semibold">(gratis fra ' + P.portalSetupFreeFrom + ' modtagere)</span>' : '');
   }
   rows.push({ label: S.a.solution === 'portal' ? 'Portaldrift &amp; individuel pluk/pak' : 'Ordrestyring &amp; kvalitetskontrol',
               detail: kr(hRate) + ' pr. modtager', amount: hRate * q });
   if (S.a.solution === 'portal') rows.push({ label:setupLabel, detail:'engangsbeløb', amount:setup, once:true });
 
   const d = P.delivery[S.a.delivery];
-  const ship = Math.max(d.min, d.per * q);
   rows.push({ label: S.a.delivery === 'samlet' ? 'Fragt, samlet levering' : 'Fragt til individuelle hjemmeadresser',
-              detail: S.a.delivery === 'samlet' ? 'min. ' + kr(d.min) : kr(d.per) + ' pr. forsendelse', amount: ship });
+              detail: S.a.delivery === 'samlet' ? 'min. ' + kr(d.min) : kr(d.per) + ' pr. forsendelse',
+              amount: Math.max(d.min, d.per * q) });
 
-  let brand = 0;
   if (S.a.branding) {
-    brand = P.branding.setup + P.branding.per * q;
-    rows.push({ label:'Branding: logo-sleeve &amp; personligt kort', detail:'opsætning ' + kr(P.branding.setup) + ' + ' + kr(P.branding.per) + ' pr. stk.', amount:brand });
+    rows.push({ label:'Branding: logo-sleeve &amp; personligt kort',
+                detail:'opsætning ' + kr(P.branding.setup) + ' + ' + kr(P.branding.per) + ' pr. stk.',
+                amount: P.branding.setup + P.branding.per * q });
   }
 
   const total = rows.reduce((s, r) => s + r.amount, 0);
@@ -977,8 +1004,9 @@ function calcTextile(){
       detail: kr2(deco.perUnit) + ' pr. stk.', amount: deco.perUnit * q }
   ];
   if (deco.setup > 0) {
+    const n = S.b.colors * S.b.placements;
     rows.push({ label: S.b.method === 'silke'
-                  ? 'Opstart: silketryksrammer &amp; indkøring (' + (S.b.colors * S.b.placements) + ' ramme' + (S.b.colors * S.b.placements > 1 ? 'r' : '') + ')'
+                  ? 'Opstart: silketryksrammer &amp; indkøring (' + n + ' ramme' + (n > 1 ? 'r' : '') + ')'
                   : 'Opstart: digitalisering af logo til sting-fil',
                 detail: 'engangsbeløb — genbruges ved efterbestilling', amount: deco.setup, once:true });
   }
@@ -995,7 +1023,7 @@ function isReady(){
 }
 
 /* ============================================================
-   6) SKATTE-STATUS (LIVE, SPOR A)
+   6) SKATTESTATUS (LIVE, SPOR A)
    ============================================================ */
 
 function renderTaxLive(){
@@ -1037,15 +1065,15 @@ function renderTaxLive(){
   }
 
   box.classList.remove('fc-hide');
-  box.innerHTML = '<div class="flex items-start gap-3 flex-wrap">'
+  box.innerHTML = '<div class="flex items-start gap-3.5 flex-wrap">'
     + '<span class="fc-pill ' + pill[0] + '">' + pill[1] + '</span>'
-    + '<p class="text-[13.5px] font-bold text-navy-950 flex-1 min-w-[240px]">' + head + '</p></div>'
-    + '<p class="mt-2.5 text-[13.5px] text-slatey-700 leading-relaxed">' + body + '</p>'
-    + '<p class="mt-2.5 text-[12px] text-slatey-500">Vejledende for indkomståret 2026. Kontrollér altid med jeres revisor.</p>';
+    + '<p class="text-[14px] font-bold text-ink flex-1 min-w-[240px] leading-snug">' + head + '</p></div>'
+    + '<p class="mt-3 text-[14px] text-ink-500 leading-relaxed">' + body + '</p>'
+    + '<p class="mt-3 text-[12.5px] text-ink-400">Vejledende for indkomståret 2026. Kontrollér altid med jeres revisor.</p>';
 }
 
 /* ============================================================
-   7) ADVARSLER / ANBEFALINGER (SPOR B)
+   7) ADVARSLER OG ANBEFALINGER (SPOR B)
    ============================================================ */
 
 function textileWarning(){
@@ -1071,18 +1099,8 @@ function textileWarning(){
   return null;
 }
 
-function warnBox(tone, title, html){
-  const c = tone === 'warn'
-    ? ['border-gold-500 bg-gold-100/60','#9A6F10','text-[#7A5608]']
-    : ['border-navy-500 bg-navy-100/60','#1F4568','text-navy-800'];
-  return '<div class="rounded-xl border-l-4 ' + c[0] + ' p-4 flex gap-3 fc-in">'
-    + '<svg class="shrink-0 mt-0.5" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="' + c[1] + '" stroke-width="2.2" stroke-linecap="round"><path d="M12 9v4M12 17v.01"/><path d="M10.3 3.9 2.4 17.5A2 2 0 0 0 4.1 20.5h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>'
-    + '<div><p class="text-[14px] font-bold ' + c[2] + '">' + title + '</p>'
-    + '<p class="mt-1 text-[13.5px] text-slatey-700 leading-relaxed">' + html + '</p></div></div>';
-}
-
 /* ============================================================
-   8) NAVIGATION & TRIN
+   8) NAVIGATION OG TRIN
    ============================================================ */
 
 let currentStep = 1;
@@ -1121,10 +1139,10 @@ function startTrack(t){
   $('#fc-form-B').classList.toggle('fc-hide', t !== 'B');
   if (t === 'A') {
     $('#fc-s2-title').textContent = 'Firmagaver & julegaver';
-    $('#fc-s2-sub').innerHTML = 'Fire valg — så har du både en pris og et klart svar på, hvordan gaven står skattemæssigt. Prisen opdaterer sig løbende nederst på skærmen.';
+    $('#fc-s2-sub').textContent = 'Fire valg — så har du både en pris og et klart svar på, hvordan gaven står skattemæssigt. Prisen opdaterer sig løbende nederst på skærmen.';
   } else {
     $('#fc-s2-title').textContent = 'Firmatøj & tekstil merch';
-    $('#fc-s2-sub').innerHTML = 'Vi starter med anvendelsen — det er den, der afgør både materiale og forædlingsmetode. Prisen opdaterer sig løbende nederst på skærmen.';
+    $('#fc-s2-sub').textContent = 'Vi starter med anvendelsen — det er den, der afgør både materiale og forædlingsmetode. Prisen opdaterer sig løbende nederst på skærmen.';
   }
   setStep(2);
   update();
@@ -1135,10 +1153,10 @@ function renderProducts(){
   $('#fc-b-products').innerHTML = list.map(p =>
     '<label class="fc-opt"><input type="radio" name="b-product" value="' + p.id + '"' + (S.b.product === p.id ? ' checked' : '') + '>' +
     '<div class="fc-box"><div class="flex items-start justify-between gap-2">' +
-      '<span class="font-bold text-[15px] text-navy-950 leading-snug">' + esc(p.name) + '</span>' +
-      '<svg class="fc-tick shrink-0 mt-0.5" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1F4568" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>' +
-      '<p class="mt-1.5 text-[13px] text-slatey-500 leading-snug">' + esc(p.spec) + '</p>' +
-      '<p class="mt-2 text-[12.5px] font-semibold text-navy-600">fra ' + kr(p.p.basis) + ' pr. stk.</p>' +
+      '<span class="font-bold text-[15.5px] text-ink leading-snug">' + esc(p.name) + '</span>' +
+      '<svg class="fc-tick shrink-0 mt-0.5" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#E3002B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>' +
+      '<p class="mt-2 text-[13.5px] text-ink-400 leading-snug">' + esc(p.spec) + '</p>' +
+      '<p class="mt-3 text-[13px] font-bold text-brand fc-num">fra ' + kr(p.p.basis) + ' pr. stk.</p>' +
     '</div></label>').join('');
 }
 
@@ -1220,26 +1238,24 @@ function renderCompare(r){
 
   $('#fc-compare-rows').innerHTML = res.map(x => {
     const isCur = x.m === S.b.method, isBest = x.m === best.m;
-    return '<tr class="' + (isCur ? 'bg-navy-100/60' : '') + '">'
-      + '<td class="py-3 pr-4 border-t border-slatey-200 font-bold text-navy-950">' + names[x.m]
-        + (isCur ? '<span class="ml-2 text-[10.5px] font-bold uppercase tracking-wider text-navy-600 bg-white px-2 py-0.5 rounded border border-navy-300">dit valg</span>' : '')
-        + (isBest && !isCur ? '<span class="ml-2 text-[10.5px] font-bold uppercase tracking-wider text-[#166534] bg-[#E6F6EC] px-2 py-0.5 rounded">billigst</span>' : '')
-        + (isBest && isCur ? '<span class="ml-2 text-[10.5px] font-bold uppercase tracking-wider text-[#166534] bg-[#E6F6EC] px-2 py-0.5 rounded">billigst</span>' : '')
+    return '<tr class="' + (isCur ? 'bg-mist' : '') + '">'
+      + '<td class="py-3.5 pr-4 border-t border-line font-bold text-ink">' + names[x.m]
+        + (isCur ? '<span class="ml-2 text-[10.5px] font-bold uppercase tracking-[.08em] text-ink bg-white px-2 py-0.5 rounded-full border border-line">dit valg</span>' : '')
+        + (isBest ? '<span class="ml-2 text-[10.5px] font-bold uppercase tracking-[.08em] text-[#166534] bg-[#E8F5EC] px-2 py-0.5 rounded-full">billigst</span>' : '')
       + '</td>'
-      + '<td class="py-3 pr-4 border-t border-slatey-200 text-slatey-700">' + (x.setup ? kr(x.setup) : '–') + '</td>'
-      + '<td class="py-3 pr-4 border-t border-slatey-200 text-slatey-700">' + kr2(x.per) + '</td>'
-      + '<td class="py-3 border-t border-slatey-200 font-bold text-navy-950">' + kr2(x.unit) + '</td></tr>';
+      + '<td class="py-3.5 pr-4 border-t border-line text-ink-500 fc-num">' + (x.setup ? kr(x.setup) : '–') + '</td>'
+      + '<td class="py-3.5 pr-4 border-t border-line text-ink-500 fc-num">' + kr2(x.per) + '</td>'
+      + '<td class="py-3.5 border-t border-line font-bold text-ink fc-num">' + kr2(x.unit) + '</td></tr>';
   }).join('');
 
   const cur = res.filter(x => x.m === S.b.method)[0];
-  const diff = (cur.unit - best.unit) * q;
   $('#fc-compare-tip').innerHTML = (best.m === S.b.method)
-    ? '<span class="font-semibold text-[#166534]">Dit valg er også det billigste ved ' + nf0.format(q) + ' stk.</span> '
-      + 'Bemærk dog, at pris ikke er det eneste kriterium — holdbarhed og udtryk vejer ofte tungere på tøj, medarbejderne skal bære dagligt.'
-    : '<span class="font-semibold text-navy-950">' + names[best.m] + ' ville være ' + kr2(cur.unit - best.unit)
-      + ' billigere pr. stk. — ' + kr(diff) + ' på hele ordren.</span> '
-      + 'Om det er den rigtige beslutning afhænger af udtrykket: ' + names[S.b.method].toLowerCase()
-      + ' er valgt af en grund, og på firmatøj holder det valg typisk i flere år.';
+    ? '<span class="font-bold text-[#166534]">Dit valg er også det billigste ved ' + nf0.format(q) + ' stk.</span> '
+      + '<span class="text-ink-500">Bemærk dog, at pris ikke er det eneste kriterium — holdbarhed og udtryk vejer ofte tungere på tøj, medarbejderne skal bære dagligt.</span>'
+    : '<span class="font-bold text-ink">' + names[best.m] + ' ville være ' + kr2(cur.unit - best.unit)
+      + ' billigere pr. stk. — ' + kr((cur.unit - best.unit) * q) + ' på hele ordren.</span> '
+      + '<span class="text-ink-500">Om det er den rigtige beslutning afhænger af udtrykket: ' + names[S.b.method].toLowerCase()
+      + ' er valgt af en grund, og på firmatøj holder det valg typisk i flere år.</span>';
 }
 
 function renderPrice(){
@@ -1251,30 +1267,29 @@ function renderPrice(){
 
   $('#fc-price-rows').innerHTML = r.rows.map(row =>
     '<tr><td class="align-top"><span class="font-semibold text-white">' + row.label + '</span>'
-    + (row.once ? '<span class="ml-2 text-[10.5px] font-bold uppercase tracking-wider text-gold-500 border border-gold-500/50 px-1.5 py-0.5 rounded">engangs</span>' : '')
-    + '<br><span class="text-navy-300 text-[12.5px]">' + row.detail + '</span></td>'
-    + '<td class="align-top text-right font-bold whitespace-nowrap text-white">' + kr(row.amount) + '</td></tr>'
+    + (row.once ? '<span class="ml-2 text-[10px] font-bold uppercase tracking-[.1em] text-brand-bright border border-brand-bright/50 px-2 py-0.5 rounded-full">engangs</span>' : '')
+    + '<br><span class="text-white/45 text-[12.5px]">' + row.detail + '</span></td>'
+    + '<td class="align-top text-right font-bold whitespace-nowrap text-white fc-num">' + kr(row.amount) + '</td></tr>'
   ).join('') + '<tr class="bg-white/[.07]"><td class="font-extrabold text-white">Total ex. moms</td>'
-    + '<td class="text-right font-extrabold text-gold-500 whitespace-nowrap">' + kr(r.total) + '</td></tr>';
+    + '<td class="text-right font-extrabold text-brand-bright whitespace-nowrap fc-num">' + kr(r.total) + '</td></tr>';
 
-  // Kontekstuelle noter under prisen
   const notes = [];
   if (S.track === 'A') {
-    const incl = bandValue() * 1.25;
-    if (S.a.occasion === 'jul' && incl <= FC_PRICING.tax2026.julegave)
-      notes.push(noteBox('info','Skattefri julegave','Gaveværdien på ' + kr(incl) + ' inkl. moms ligger under grænsen på ' + kr(FC_PRICING.tax2026.julegave) + ' Medarbejderen beskattes ikke.'));
-    if (S.a.occasion === 'jul' && incl > FC_PRICING.tax2026.julegave)
-      notes.push(noteBox('warn','Bemærk beskatningen','Gaveværdien overstiger julegavegrænsen på ' + kr(FC_PRICING.tax2026.julegave) + ' inkl. moms. Hele værdien skal medregnes i medarbejderens indkomst — det bør kommunikeres, inden gaven uddeles.'));
-    if (S.a.solution === 'portal' && S.a.qty < FC_PRICING.gifts.portalSetupFreeFrom)
-      notes.push(noteBox('info','Opsætningen bliver gratis ved ' + FC_PRICING.gifts.portalSetupFreeFrom + ' modtagere','I er ' + (FC_PRICING.gifts.portalSetupFreeFrom - S.a.qty) + ' modtagere fra at spare ' + kr(FC_PRICING.gifts.portalSetup) + ' i portalopsætning.'));
+    const incl = bandValue() * 1.25, T = FC_PRICING.tax2026, P = FC_PRICING.gifts;
+    if (S.a.occasion === 'jul' && incl <= T.julegave)
+      notes.push(noteBox('info','Skattefri julegave','Gaveværdien på ' + kr(incl) + ' inkl. moms ligger under grænsen på ' + kr(T.julegave) + ' Medarbejderen beskattes ikke.'));
+    if (S.a.occasion === 'jul' && incl > T.julegave)
+      notes.push(noteBox('warn','Bemærk beskatningen','Gaveværdien overstiger julegavegrænsen på ' + kr(T.julegave) + ' inkl. moms. Hele værdien skal medregnes i medarbejderens indkomst — det bør kommunikeres, inden gaven uddeles.'));
+    if (S.a.solution === 'portal' && S.a.qty < P.portalSetupFreeFrom)
+      notes.push(noteBox('info','Opsætningen bliver gratis ved ' + P.portalSetupFreeFrom + ' modtagere','I er ' + (P.portalSetupFreeFrom - S.a.qty) + ' modtagere fra at spare ' + kr(P.portalSetup) + ' i portalopsætning.'));
     if (S.a.delivery === 'hjem')
-      notes.push(noteBox('info','Levering til hjemmeadresser','Fragten udgør ' + kr(FC_PRICING.gifts.delivery.hjem.per) + ' pr. modtager. Vi skal bruge en navne- og adresseliste i regneark — vi sender skabelonen sammen med tilbuddet.'));
+      notes.push(noteBox('info','Levering til hjemmeadresser','Fragten udgør ' + kr(P.delivery.hjem.per) + ' pr. modtager. Vi skal bruge en navne- og adresseliste i regneark — vi sender skabelonen sammen med tilbuddet.'));
   } else {
     const once = r.rows.filter(x => x.once).reduce((s, x) => s + x.amount, 0);
     if (once > 0)
-      notes.push(noteBox('info','Engangsomkostninger genbruges','' + kr(once) + ' af totalen er opstart, som kun betales første gang. Ved efterbestilling af samme logo falder stykprisen til ' + kr2(r.unit - once / r.qty)));
+      notes.push(noteBox('info','Engangsomkostninger genbruges', kr(once) + ' af totalen er opstart, som kun betales første gang. Ved efterbestilling af samme logo falder stykprisen til ' + kr2(r.unit - once / r.qty)));
     const w = textileWarning();
-    if (w) notes.push(noteBox(w[0] === 'warn' ? 'warn' : 'info', w[1], w[2]));
+    if (w) notes.push(noteBox(w[0], w[1], w[2]));
     notes.push(noteBox('info','Prisen dækker ikke størrelsesfordeling endnu','Vi regner med standardfordelingen. Har I en fast fordeling eller navnemærkning pr. medarbejder, justerer vi i det bindende tilbud.'));
   }
   $('#fc-price-notes').innerHTML = notes.join('');
@@ -1289,13 +1304,13 @@ function renderPrice(){
 
 function renderLead(r){
   const bullets = arr => arr.map(b =>
-    '<li class="flex items-start gap-2.5 text-[14px] text-slatey-700">'
-    + '<svg class="shrink-0 mt-1" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2A5C89" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>'
+    '<li class="flex items-start gap-3 text-[14.5px] text-ink-500">'
+    + '<svg class="shrink-0 mt-1" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#E3002B" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>'
     + '<span>' + b + '</span></li>').join('');
 
   if (S.track === 'A') {
-    $('#fc-lead-title').innerHTML = 'Vil du have tilsendt det fulde interaktive PDF-katalog med konkrete gaveforslag til dit budget — samt skatte-tjeklisten?';
-    $('#fc-lead-sub').innerHTML = 'Vi sammensætter kataloget efter <strong>præcis den beregning, du lige har lavet</strong>: '
+    $('#fc-lead-title').textContent = 'Vil du have tilsendt det fulde interaktive PDF-katalog med konkrete gaveforslag til dit budget — samt skatte-tjeklisten?';
+    $('#fc-lead-sub').innerHTML = 'Vi sammensætter kataloget efter <strong class="text-ink font-semibold">præcis den beregning, du lige har lavet</strong>: '
       + nf0.format(r.qty) + ' modtagere i ' + kr(bandValue()) + '-båndet. Ingen generisk brochure.';
     $('#fc-lead-bullets').innerHTML = bullets([
       'Interaktivt PDF-katalog med konkrete gaver i dit budget-bånd',
@@ -1305,9 +1320,9 @@ function renderLead(r){
     ]);
     $('#fc-submit-label').textContent = 'Send mig kataloget & tjeklisten';
     $('#fc-upload-wrap').classList.add('fc-hide');
-    $('#fc-done-text').innerHTML = 'Kataloget og skatte-tjeklisten er på vej til din indbakke. En af vores gaverådgivere følger op inden for én hverdag med konkrete forslag til dit budget.';
+    $('#fc-done-text').textContent = 'Kataloget og skatte-tjeklisten er på vej til din indbakke. En af vores gaverådgivere følger op inden for én hverdag med konkrete forslag til dit budget.';
   } else {
-    $('#fc-lead-title').innerHTML = 'Få et bindende tilbud + en GRATIS digital 3D-mockup med DIT logo sat på tøjet';
+    $('#fc-lead-title').textContent = 'Få et bindende tilbud + en GRATIS digital 3D-mockup med DIT logo sat på tøjet';
     $('#fc-lead-sub').innerHTML = 'Du får din egen ' + esc(r.product.name.toLowerCase())
       + ' visualiseret med jeres logo i den valgte placering og størrelse — så I kan se det, før I bestiller. Helt uforpligtende.';
     $('#fc-lead-bullets').innerHTML = bullets([
@@ -1318,7 +1333,7 @@ function renderLead(r){
     ]);
     $('#fc-submit-label').textContent = 'Få tilbud & 3D-mockup';
     $('#fc-upload-wrap').classList.remove('fc-hide');
-    $('#fc-done-text').innerHTML = 'Vi går i gang med din 3D-mockup. Har du uploadet et logo, er den typisk klar inden for 1–2 hverdage — ellers kontakter vi dig for at få filen.';
+    $('#fc-done-text').textContent = 'Vi går i gang med din 3D-mockup. Har du uploadet et logo, er den typisk klar inden for 1–2 hverdage — ellers kontakter vi dig for at få filen.';
   }
 
   $('#fc-h-track').value = S.track === 'A' ? 'Firmagaver & julegaver' : 'Firmatøj & tekstil';
@@ -1330,7 +1345,7 @@ function renderLead(r){
 }
 
 /* ============================================================
-   13) VALIDERING & AFSENDELSE
+   13) VALIDERING OG AFSENDELSE
    ============================================================ */
 
 function fieldError(input, msg){
@@ -1345,20 +1360,15 @@ function validate(){
   const company = $('#fc-company'), email = $('#fc-email'), phone = $('#fc-phone');
 
   ok = fieldError(company, company.value.trim().length < 2 ? 'Angiv venligst firmanavn.' : '') && ok;
-
-  const ev = email.value.trim();
-  ok = fieldError(email, !/^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/.test(ev) ? 'Angiv en gyldig e-mailadresse.' : '') && ok;
-
-  const digits = phone.value.replace(/[^\d]/g, '');
-  ok = fieldError(phone, digits.length < 8 ? 'Angiv et telefonnummer med mindst 8 cifre.' : '') && ok;
+  ok = fieldError(email, !/^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/.test(email.value.trim()) ? 'Angiv en gyldig e-mailadresse.' : '') && ok;
+  ok = fieldError(phone, phone.value.replace(/[^\d]/g, '').length < 8 ? 'Angiv et telefonnummer med mindst 8 cifre.' : '') && ok;
 
   const file = $('#fc-logo').files[0];
   if (file && file.size > 10 * 1024 * 1024) {
-    ok = fieldError($('#fc-logo'), 'Filen er større end 10 MB. Send den i stedet som link, eller kontakt os direkte.') && false;
-    $('#fc-upload-wrap').querySelector('.fc-msg').classList.remove('fc-hide');
+    fieldError($('#fc-logo'), 'Filen er større end 10 MB. Send den som link, eller kontakt os direkte.');
+    ok = false;
   } else {
-    const m = $('#fc-upload-wrap').querySelector('.fc-msg');
-    if (m) { m.classList.add('fc-hide'); m.textContent = ''; }
+    fieldError($('#fc-logo'), '');
   }
 
   const consent = $('#fc-consent'), cmsg = $('#fc-consent-msg');
@@ -1373,21 +1383,19 @@ function validate(){
 function submitLead(e){
   e.preventDefault();
   if (!validate()) {
-    const first = $('#fc-form').querySelector('.fc-err') || $('#fc-consent');
+    const first = $('#fc-form').querySelector('.fc-err:not([type=file])') || $('#fc-consent');
     first.scrollIntoView({ behavior:'smooth', block:'center' });
     if (first.focus) first.focus();
     return;
   }
 
   const btn = $('#fc-submit'), label = $('#fc-submit-label'), original = label.textContent;
-  btn.disabled = true; btn.classList.add('opacity-70'); label.textContent = 'Sender …';
+  btn.disabled = true; btn.classList.add('opacity-60'); label.textContent = 'Sender …';
 
   const fd = new FormData($('#fc-form'));
-  const done = () => { setStep(5); markStep4(); btn.disabled = false; btn.classList.remove('opacity-70'); label.textContent = original; };
-  const fail = () => {
-    btn.disabled = false; btn.classList.remove('opacity-70'); label.textContent = original;
-    alert('Beklager — der opstod en fejl under afsendelsen. Prøv igen, eller ring til os på hovednummeret.');
-  };
+  const restore = () => { btn.disabled = false; btn.classList.remove('opacity-60'); label.textContent = original; };
+  const done = () => { restore(); setStep(5); markStep4(); };
+  const fail = () => { restore(); alert('Beklager — der opstod en fejl under afsendelsen. Prøv igen, eller ring til os.'); };
 
   if (!FC_CONFIG.endpoint) {
     // DEMO-TILSTAND: intet endpoint konfigureret.
@@ -1409,7 +1417,6 @@ function submitLead(e){
 $$('.fc-track').forEach(b => b.addEventListener('click', () => startTrack(b.dataset.track)));
 $$('.fc-back').forEach(b => b.addEventListener('click', () => setStep(Number(b.dataset.to))));
 
-// Radio- og checkbox-valg
 document.addEventListener('change', e => {
   const t = e.target;
   if (t.name === 'a-occasion')      S.a.occasion = t.value;
@@ -1432,33 +1439,29 @@ document.addEventListener('change', e => {
   update();
 });
 
-// Antalsfelter
 function bindQty(id, key){
   const el = $(id);
+  const wrap = $('[data-qtychips="' + id.slice(1) + '"]');
   const apply = () => {
     let v = parseInt(el.value, 10);
     if (isNaN(v) || v < 1) v = 1;
     if (v > 100000) v = 100000;
-    (S[key === 'a' ? 'a' : 'b']).qty = v;
-    const wrap = $('[data-qtychips="' + id.slice(1) + '"]');
+    S[key].qty = v;
     if (wrap) $$('.fc-chip', wrap).forEach(c => c.setAttribute('aria-pressed', String(Number(c.dataset.v) === v)));
     update();
   };
   el.addEventListener('input', apply);
   el.addEventListener('blur', () => { if (!el.value || parseInt(el.value, 10) < 1) el.value = 1; apply(); });
-  const wrap = $('[data-qtychips="' + id.slice(1) + '"]');
   if (wrap) $$('.fc-chip', wrap).forEach(c => c.addEventListener('click', () => { el.value = c.dataset.v; apply(); }));
   apply();
 }
 bindQty('#fc-a-qty', 'a');
 bindQty('#fc-b-qty', 'b');
 
-// Videre til prisen
 function goPrice(){ if (!isReady()) return; renderPrice(); setStep(3); }
 $('#fc-to-price').addEventListener('click', goPrice);
 $('#fc-sticky-cta').addEventListener('click', goPrice);
 
-// Formular
 $('#fc-form').addEventListener('submit', submitLead);
 $$('#fc-company, #fc-email, #fc-phone').forEach(i =>
   i.addEventListener('input', () => { if (i.classList.contains('fc-err')) fieldError(i, ''); }));
@@ -1467,11 +1470,12 @@ $('#fc-consent').addEventListener('change', () => { if ($('#fc-consent').checked
 // Drag & drop til logo
 const drop = $('#fc-upload-wrap');
 if (drop) {
+  const zone = drop.querySelector('label[for="fc-logo"]');
   ['dragenter','dragover'].forEach(ev => drop.addEventListener(ev, e => {
-    e.preventDefault(); drop.querySelector('label').classList.add('border-navy-500','bg-slatey-50');
+    e.preventDefault(); zone.classList.add('border-brand','bg-mist');
   }));
   ['dragleave','drop'].forEach(ev => drop.addEventListener(ev, e => {
-    e.preventDefault(); drop.querySelector('label').classList.remove('border-navy-500','bg-slatey-50');
+    e.preventDefault(); zone.classList.remove('border-brand','bg-mist');
   }));
   drop.addEventListener('drop', e => {
     if (e.dataTransfer.files && e.dataTransfer.files.length) {
@@ -1483,18 +1487,16 @@ if (drop) {
 
 // Markér trin 4, når lead-formularen kommer i syne
 if ('IntersectionObserver' in window) {
-  const io = new IntersectionObserver(entries => {
+  new IntersectionObserver(entries => {
     entries.forEach(en => {
       if (currentStep !== 3) return;
       if (en.isIntersecting) markStep4();
-      else { $$('.fc-step').forEach(el => { const s = Number(el.dataset.step);
-        el.classList.toggle('is-active', s === 3); el.classList.toggle('is-done', s < 3); }); }
+      else $$('.fc-step').forEach(el => { const s = Number(el.dataset.step);
+        el.classList.toggle('is-active', s === 3); el.classList.toggle('is-done', s < 3); });
     });
-  }, { threshold:0.25 });
-  io.observe($('#fc-lead'));
+  }, { threshold:0.25 }).observe($('#fc-lead'));
 }
 
-// Genstart
 function reset(){
   S.track = null;
   S.a = { occasion:null, qty:100, band:null, bandCustom:800, solution:'fast', delivery:'samlet', branding:false };
@@ -1502,20 +1504,24 @@ function reset(){
   $('#fc-form').reset();
   $$('input[type=radio]').forEach(r => { r.checked = (r.value === 'fast' || r.value === 'samlet'); });
   $('#fc-a-qty').value = 100; $('#fc-b-qty').value = 100;
+  $('#fc-a-bandval').value = 800;
   $('#fc-b-placements').value = '1'; $('#fc-b-colors').value = '1';
   $('#fc-logo-label').textContent = 'Vælg fil eller træk den hertil';
   $$('.fc-msg').forEach(m => m.classList.add('fc-hide'));
   $$('.fc-err').forEach(m => m.classList.remove('fc-err'));
   $('#fc-b-products').innerHTML = '';
-  ['#fc-b-product-card','#fc-b-deco-card','#fc-b-qty-card','#fc-tax-live','#fc-b-warn','#fc-compare'].forEach(s => $(s).classList.add('fc-hide'));
+  ['#fc-b-product-card','#fc-b-deco-card','#fc-b-qty-card','#fc-tax-live','#fc-b-warn','#fc-compare','#fc-a-band-custom'].forEach(s => $(s).classList.add('fc-hide'));
   $$('[data-kb]').forEach(k => k.innerHTML = '');
+  bindQty('#fc-a-qty', 'a'); bindQty('#fc-b-qty', 'b');
   setStep(1);
 }
 $('#fc-restart').addEventListener('click', reset);
 $('#fc-again').addEventListener('click', reset);
 
 // Init
-$('#fc-year').textContent = new Date().getFullYear();
+$('#fc-link-textile').href = FC_LINKS.textile;
+$('#fc-link-merch').href   = FC_LINKS.merch;
+$('#fc-year').textContent  = new Date().getFullYear();
 setStep(1);
 
 })();

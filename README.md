@@ -2,7 +2,23 @@
 
 `freeconcept-lead-modul.html` er én selvstændig HTML-fil med al CSS (Tailwind CDN) og
 vanilla JavaScript indbygget. Ingen build, ingen npm, ingen eksterne afhængigheder
-ud over Tailwind-scriptet.
+ud over Tailwind-scriptet og Montserrat fra Google Fonts.
+
+## Designlinje
+
+Modulet følger freeconcept.dk 1:1:
+
+| Element | Værdi |
+|---|---|
+| Flade | Hvid, `#131313` tekst, `#5A5A5A` / `#8A8A8A` grå |
+| Accent | `#E3002B` (SportDirect-rød) på CTA'er, valgte kort og aktivt trin |
+| Hårstreg | `#E6E6E6` · dis `#F6F6F6` |
+| Skrift | Montserrat — 800 display, 700 kort, 600 labels, 400/500 brødtekst |
+| Former | 20 px runde kort, pilleformede felter og knapper som sitets søgefelt |
+
+Modulet har **bevidst ingen egen header med logo og menu** — den står allerede
+øverst på siden. Trinindikatoren er heller ikke sticky, fordi sitets egen header
+er fastlåst, og to klæbende bjælker ville dække indholdet.
 
 ## Flow
 
@@ -37,6 +53,7 @@ Alt, der normalt skal justeres, ligger samlet øverst i `<script>`-blokken:
 | `FC_PRODUCTS` | Produktkatalog pr. anvendelse med priser for Basis / Premium / GOTS. |
 | `KB` | Teksterne i Ekspert-Viden-bokse. |
 | `FC_PRICING.tax2026` | Beløbsgrænser for julegave, bagatelgrænse, reklameartikel og jubilæumsgratiale. |
+| `FC_LINKS` | URL'er til jeres kategorisider. De vises på kvitteringen, så kunden kan kigge videre, mens hun venter på svar. Står som `/firmatoj` og `/merchandise` og skal rettes til jeres faktiske stier. |
 | `tailwind.config` (i `<head>`-scriptet) | Farvepaletten. |
 
 ### Leadet
