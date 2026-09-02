@@ -10,14 +10,22 @@ Ingen build, ingen npm. Kun Tailwind via CDN og Montserrat fra Google Fonts.
 
 ## Se modulet live
 
-| | |
-|---|---|
-| **Åbn i browseren** | [htmlpreview.github.io](https://htmlpreview.github.io/?https://github.com/jimhoeeg/Freeconcept/blob/claude/freeconcept-lead-generator-alkd4y/freeconcept-lead-modul.html) · [raw.githack.com](https://raw.githack.com/jimhoeeg/Freeconcept/claude/freeconcept-lead-generator-alkd4y/freeconcept-lead-modul.html) |
-| **Permanent URL** | Slå GitHub Pages til under *Settings → Pages* og vælg denne branch. Modulet ligger så på `https://jimhoeeg.github.io/Freeconcept/freeconcept-lead-modul.html` |
-| **Lokalt** | Hent filen og åbn den — den virker direkte fra skrivebordet |
+**GitHub Pages: <https://jimhoeeg.github.io/Freeconcept/>**
 
-> De to preview-tjenester er tredjeparter, der henter filen fra GitHub. De kræver,
-> at repoet er offentligt. Er det privat, brug GitHub Pages eller den lokale fil.
+Roden viser modulet selv — ikke denne dokumentation. Det klarer `index.html`,
+der sender videre til `freeconcept-lead-modul.html`, så der kun findes én kopi
+af koden i repoet.
+
+Virker linket ikke, er Pages ikke slået til endnu: **Settings → Pages →
+Source: Deploy from a branch → Branch: `claude/freeconcept-lead-generator-alkd4y` / `/ (root)`**.
+Første udgivelse tager et minut eller to.
+
+| Alternativ | |
+|---|---|
+| Uden Pages | [htmlpreview.github.io](https://htmlpreview.github.io/?https://github.com/jimhoeeg/Freeconcept/blob/claude/freeconcept-lead-generator-alkd4y/freeconcept-lead-modul.html) · [raw.githack.com](https://raw.githack.com/jimhoeeg/Freeconcept/claude/freeconcept-lead-generator-alkd4y/freeconcept-lead-modul.html) — tredjeparter, der henter filen fra GitHub. Kræver, at repoet er offentligt. |
+| Lokalt | Hent `freeconcept-lead-modul.html` og åbn den — den virker direkte fra skrivebordet |
+
+> Modulet henter Tailwind og Montserrat fra CDN, så demoen kræver internetforbindelse.
 
 ## Sådan ser det ud
 
