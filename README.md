@@ -1,8 +1,62 @@
 # Freeconcept — Interaktivt lead-genereringsmodul
 
-`freeconcept-lead-modul.html` er én selvstændig HTML-fil med al CSS (Tailwind CDN) og
-vanilla JavaScript indbygget. Ingen build, ingen npm, ingen eksterne afhængigheder
-ud over Tailwind-scriptet og Montserrat fra Google Fonts.
+Et lead-genereringsmodul til freeconcept.dk, der **viser prisen på skærmen, før
+kunden bliver bedt om sine kontaktoplysninger**. Undervejs deler modulet den
+faglige viden — SKATs gavegrænser, materialevalg, tryk vs. broderi — som
+kunderne normalt først får på et møde.
+
+Alt ligger i **én selvstændig HTML-fil**: `freeconcept-lead-modul.html`.
+Ingen build, ingen npm. Kun Tailwind via CDN og Montserrat fra Google Fonts.
+
+## Se modulet live
+
+| | |
+|---|---|
+| **Åbn i browseren** | [htmlpreview.github.io](https://htmlpreview.github.io/?https://github.com/jimhoeeg/Freeconcept/blob/claude/freeconcept-lead-generator-alkd4y/freeconcept-lead-modul.html) · [raw.githack.com](https://raw.githack.com/jimhoeeg/Freeconcept/claude/freeconcept-lead-generator-alkd4y/freeconcept-lead-modul.html) |
+| **Permanent URL** | Slå GitHub Pages til under *Settings → Pages* og vælg denne branch. Modulet ligger så på `https://jimhoeeg.github.io/Freeconcept/freeconcept-lead-modul.html` |
+| **Lokalt** | Hent filen og åbn den — den virker direkte fra skrivebordet |
+
+> De to preview-tjenester er tredjeparter, der henter filen fra GitHub. De kræver,
+> at repoet er offentligt. Er det privat, brug GitHub Pages eller den lokale fil.
+
+## Sådan ser det ud
+
+### Trin 1 — vælg spor
+![Trin 1: vælg mellem firmagaver og firmatøj](docs/screenshots/01-vaelg-spor.png)
+
+### Trin 2 — konfigurator med ekspertviden
+Hvert valg udløser en videnboks. Her forklares det, at polyesteren i en 65/35-blanding
+ikke er en spareløsning, men den funktionelle komponent.
+![Trin 2: konfigurator med ekspert-viden boks](docs/screenshots/02-ekspertviden.png)
+
+### Trin 3 — åben pris, før der spørges om noget
+Stykpris, totalpris og fuld specifikation af, hvad hver krone dækker.
+![Trin 3: prispanel med specifikation](docs/screenshots/03-aaben-pris.png)
+
+Alle tre forædlingsmetoder regnes på kundens eget antal, så break-even bliver synlig:
+![Sammenligning af transfertryk, silketryk og broderi](docs/screenshots/04-sammenligning.png)
+
+### Trin 4 — lead-formularen ligger under prisen
+![Trin 4: lead-formular med logo-upload](docs/screenshots/05-lead-formular.png)
+
+### Mobil
+<img src="docs/screenshots/06-mobil.png" alt="Modulet på mobil med live skattestatus" width="380">
+
+## Flow
+
+1. **Vælg spor** — Spor A: Firmagaver & julegaver · Spor B: Firmatøj & tekstil merch
+2. **Konfigurator** — dynamisk skema pr. spor, hvor hvert valg udløser en ekspert-videnboks
+3. **Åben prisberegner** — stykpris og totalpris ex. moms vises **før** kontaktoplysninger
+4. **Lead-capture** — formular direkte under prisen, tilpasset det valgte spor
+5. **Kvittering** — leder videre til kategorisiderne, så kunderejsen fortsætter
+
+To ting gør modulet interaktivt frem for statisk:
+
+- **Live skattestatus (spor A)** — vælges 800-båndet til en julegave, skifter feltet
+  straks til "Skattepligtig" og forklarer hvorfor.
+- **Metodesammenligning (spor B)** — ved 25 stk. peger den på transfertryk, ved 250 stk.
+  på silketryk. Advarer også ved kombinationer, der ikke kan lade sig gøre
+  (silketryk på softshell, broderi på 150 g/m²).
 
 ## Designlinje
 
@@ -20,20 +74,13 @@ Modulet har **bevidst ingen egen header med logo og menu** — den står allered
 øverst på siden. Trinindikatoren er heller ikke sticky, fordi sitets egen header
 er fastlåst, og to klæbende bjælker ville dække indholdet.
 
-## Flow
-
-1. **Vælg spor** — Spor A: Firmagaver & julegaver · Spor B: Firmatøj & tekstil merch
-2. **Konfigurator** — dynamisk skema pr. spor, hvor hvert valg udløser en Ekspert-Viden-boks
-3. **Åben prisberegner** — stykpris og totalpris ex. moms vises på skærmen **før** kontaktoplysninger
-4. **Lead-capture** — formular placeret direkte under prisen, tilpasset det valgte spor
-
 ## Indsæt på hjemmesiden
 
-**WordPress (anbefalet):** opret en ny side, tilføj blokken *Custom HTML* / *Egen HTML*
-og indsæt hele filens indhold. Modulet har sit eget navnerum (`#fc-app`, klasser med
-`fc-`-præfiks), så det kolliderer ikke med temaets styles.
+**WordPress (anbefalet):** opret en ny side, tilføj blokken *Custom HTML* /
+*Egen HTML* og indsæt hele filens indhold. Modulet har sit eget navnerum
+(`#fc-app` og klasser med `fc-`-præfiks), så det kolliderer ikke med temaets styles.
 
-**Iframe (mest isoleret):** upload filen og indlejr den:
+**Iframe (mest isoleret):**
 
 ```html
 <iframe src="/moduler/freeconcept-lead-modul.html"
@@ -51,10 +98,10 @@ Alt, der normalt skal justeres, ligger samlet øverst i `<script>`-blokken:
 | `FC_CONFIG.endpoint` | Formular-endpoint (Formspree, HubSpot, WP `admin-ajax`, eget API). Er den tom, kører modulet i demo-tilstand og logger leadet i browserkonsollen. |
 | `FC_PRICING` | Alle priser: emballage, håndtering, fragt, mængderabatter, opstart og pris pr. tryk/broderi. |
 | `FC_PRODUCTS` | Produktkatalog pr. anvendelse med priser for Basis / Premium / GOTS. |
-| `KB` | Teksterne i Ekspert-Viden-bokse. |
+| `FC_LINKS` | URL'er til jeres kategorisider. Vises på kvitteringen, så kunden kan kigge videre. Står som `/firmatoj` og `/merchandise` og skal rettes til jeres faktiske stier. |
+| `KB` | Teksterne i ekspert-videnboksene. |
 | `FC_PRICING.tax2026` | Beløbsgrænser for julegave, bagatelgrænse, reklameartikel og jubilæumsgratiale. |
-| `FC_LINKS` | URL'er til jeres kategorisider. De vises på kvitteringen, så kunden kan kigge videre, mens hun venter på svar. Står som `/firmatoj` og `/merchandise` og skal rettes til jeres faktiske stier. |
-| `tailwind.config` (i `<head>`-scriptet) | Farvepaletten. |
+| `tailwind.config` | Farvepaletten. |
 
 ### Leadet
 
@@ -67,11 +114,13 @@ præcis, hvad kunden har regnet på:
 Afsendelsen bruger `FormData`, så logo-upload virker uden ekstra opsætning, hvis
 endpointet accepterer `multipart/form-data`.
 
-## Bemærk om priser og skat
+## Før produktion
 
-Priserne i `FC_PRICING` er markedsrealistiske estimater og skal erstattes af
-Freeconcepts egne kostpriser og marginer, før modulet sættes i produktion.
-
-Skatteoplysningerne er generel information for indkomståret 2026 (julegavegrænse
-900 kr., bagatelgrænse 1.300 kr., begge inkl. moms). Kontrollér satserne ved
-årsskifte — de står samlet i `FC_PRICING.tax2026`.
+1. **`FC_CONFIG.endpoint` er tom.** Modulet logger leadet i konsollen i stedet for
+   at sende det. Intet lead når frem, før jeres endpoint er sat ind.
+2. **`FC_PRICING` er markedsrealistiske estimater**, ikke Freeconcepts kostpriser.
+   Tallene opfører sig rigtigt — break-even for silketryk lander omkring 40–75 stk.
+   — men marginerne skal være jeres egne.
+3. **Skattesatserne** er generel information for indkomståret 2026 (julegavegrænse
+   900 kr., bagatelgrænse 1.300 kr., begge inkl. moms). Kontrollér dem ved årsskifte;
+   de står samlet i `FC_PRICING.tax2026`.
