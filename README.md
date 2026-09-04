@@ -144,3 +144,69 @@ endpointet accepterer `multipart/form-data`.
 3. **Skattesatserne** er generel information for indkomståret 2026 (julegavegrænse
    900 kr., bagatelgrænse 1.300 kr., begge inkl. moms). Kontrollér dem ved årsskifte;
    de står samlet i `FC_PRICING.tax2026`.
+
+---
+
+## Modul 2 — Faurlunds Have-Partner (Faurlund ApS)
+
+Repoet rummer også et lead-modul for anlægsgartneren **Faurlund ApS**: en
+6-trins have-konfigurator, der uddanner kunden undervejs og — som Freeconcept-modulet
+— viser prisen på skærmen, **før** der spørges om kontaktoplysninger.
+
+| Fil | Hvad det er |
+|---|---|
+| `FaurlundHavePartner.jsx` | Selve modulet. Én React-komponent, alt inkluderet. |
+| `faurlund-have-partner.html` | Demo-side, der kører JSX-filen uden build-step. |
+
+### Flow
+
+1. **Kortlæg** — upload et havebillede (eller brug eksempelbilledet) og sæt nåle
+   med kategori. Hver nål udløser en videnboks: *"Et solidt bærelag udgør 80% af
+   en langtidsholdbar terrasse …"*
+2. **Materialer** — visuelle kort med info-ikon på hvert materiale (Cumaru,
+   Herregårdssten, Bøgehæk m.fl.) og anlægsgartnerens note bag ikonet
+3. **Arbejdsfordeling** — tre ambitionsniveauer fra *"Du knokler lidt, vi bygger"*
+   til totalentreprise. De to første udløser en forventningsafstemmende advarsel
+   om, hvor mange tons jord en udgravning i virkeligheden er — regnet på kundens
+   egne kvadratmeter
+4. **Fremtidssikring** — abonnementer på algebehandling, hækklipning, bedpleje
+5. **Prisestimat** — dynamisk prisspænd inkl. moms med fuld specifikation og en
+   forklaring på, hvorfor det er et spænd og ikke ét tal
+6. **Lead-capture** — navn, e-mail, telefon mod en skræddersyet projekt-rapport
+
+### Sådan bruges det
+
+**I et React-projekt** (den tiltænkte vej):
+
+```jsx
+import FaurlundHavePartner from './FaurlundHavePartner';
+
+<FaurlundHavePartner onLead={(data) => sendTilCRM(data)} />
+```
+
+Afhængigheder: `react`, `lucide-react`, `tailwindcss`. `jspdf` er valgfri — er
+den installeret, downloades rapporten som PDF; ellers logges den i konsollen, og
+kunden får en kvittering på skærmen.
+
+**Uden build:** åbn `faurlund-have-partner.html` fra en webserver (fx `npx serve .`).
+Siden henter JSX-filen, oversætter den i browseren med `@babel/standalone` og
+monterer komponenten — så der kun findes én kopi af koden i repoet. React,
+lucide-react og jspdf hentes fra CDN, så siden kræver internetforbindelse og
+virker ikke fra `file://`.
+
+### Tilpas
+
+Alt, der normalt skal justeres, ligger samlet i toppen af `FaurlundHavePartner.jsx`:
+
+| Sted | Hvad det styrer |
+|---|---|
+| `PRIS` | Opstartsgebyr, prisspændets bredde, tons jord pr. m² |
+| `KATEGORIER` | Hvad kunden kan sætte nåle i — pris pr. enhed og videnboksens tekst |
+| `MATERIALER` | Materialekortene og den pædagogiske tekst bag info-ikonet |
+| `NIVEAUER` | Arbejdsfordelingen og dens prisfaktor |
+| `SERVICES` | Abonnementer og deres årspris |
+
+`onLead` kaldes med hele konfigurationen (nåle, materialer, niveau, services og
+estimat), når formularen sendes. Der er **ingen indbygget backend** — kobl den til
+jeres eget endpoint, før modulet sættes i produktion. Priserne er
+markedsrealistiske estimater, ikke Faurlunds kostpriser.

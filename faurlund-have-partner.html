@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Faurlunds Have-Partner – interaktivt lead-modul</title>
+<meta name="description" content="Faurlund ApS · 6-trins have-konfigurator med åben pris, før der spørges om kontaktoplysninger.">
+
+<!-- ============================================================
+     DEMO-SIDE FOR FaurlundHavePartner.jsx
+     ------------------------------------------------------------
+     Selve modulet ligger i ÉN React-fil: FaurlundHavePartner.jsx.
+     Denne side findes kun, så filen kan ses køre uden et build-
+     step: den henter JSX'en, oversætter den i browseren med
+     @babel/standalone og monterer komponenten. React, lucide-react
+     og jspdf hentes fra CDN via import map'et nedenfor.
+
+     I et rigtigt projekt gør du i stedet bare:
+         import FaurlundHavePartner from './FaurlundHavePartner';
+     og lader din bundler klare resten.
+
+     NB: siden skal serveres over http(s) — fetch af .jsx-filen
+     virker ikke fra file://. Kør fx:  npx serve .
+     ============================================================ -->
+
+<script src="https://cdn.tailwindcss.com/3.4.16"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@18.3.1",
+    "react-dom/client": "https://esm.sh/react-dom@18.3.1/client?external=react",
+    "lucide-react": "https://esm.sh/lucide-react@0.462.0?external=react",
+    "jspdf": "https://esm.sh/jspdf@2.5.2"
+  }
+}
+</script>
+
+<style>
+  html { color-scheme: light; }
+  body { font-family: Inter, system-ui, 'Segoe UI', Helvetica, Arial, sans-serif; }
+</style>
+</head>
+
+<body class="bg-stone-100 text-stone-900">
+  <main class="mx-auto max-w-5xl px-4 py-8 sm:py-12">
+    <header class="mx-auto mb-8 max-w-2xl text-center">
+      <p class="text-xs font-bold uppercase tracking-[0.2em] text-emerald-700">Faurlund ApS · Anlægsgartner</p>
+      <h1 class="mt-2 text-3xl font-extrabold leading-tight text-stone-900 sm:text-4xl">
+        Byg din have – og se prisen med det samme
+      </h1>
+      <p class="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-stone-600 sm:text-base">
+        Seks trin, cirka to minutter. Undervejs deler vi den viden, kunderne ellers først
+        får på et havemøde — og prisen står på skærmen, før vi spørger om dine oplysninger.
+      </p>
+    </header>
+
+    <div id="faurlund-root">
+      <p class="py-16 text-center text-sm font-semibold text-stone-400">Indlæser Have-Partneren …</p>
+    </div>
+
+    <p class="mx-auto mt-8 max-w-2xl text-center text-xs leading-relaxed text-stone-400">
+      Demo-side. Modulet selv ligger i <code class="font-semibold text-stone-500">FaurlundHavePartner.jsx</code>
+      og oversættes her i browseren, så der kun findes én kopi af koden i repoet.
+    </p>
+  </main>
+
+<script type="module">
+  const rod = document.getElementById('faurlund-root');
+
+  const fejl = (besked, detalje) => {
+    rod.innerHTML =
+      '<div class="rounded-2xl border border-amber-300 bg-amber-50 p-6 text-center">' +
+      '<p class="font-bold text-amber-900">' + besked + '</p>' +
+      '<p class="mt-2 text-xs text-amber-800">' + detalje + '</p></div>';
+  };
+
+  try {
+    const [{ default: React }, { createRoot }, babelModul] = await Promise.all([
+      import('react'),
+      import('react-dom/client'),
+      import('https://esm.sh/@babel/standalone@7.26.4'),
+    ]);
+
+    // @babel/standalone er UMD: nogle CDN'er giver navngivne eksporter, andre
+    // pakker alt på default. Tag det, der findes.
+    const Babel = typeof babelModul.transform === 'function' ? babelModul : babelModul.default;
+
+    const jsx = await fetch('./FaurlundHavePartner.jsx').then((r) => {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.text();
+    });
+
+    // Oversæt JSX -> JS. "classic" runtime, så modulets egen React-import bruges.
+    const { code } = Babel.transform(jsx, {
+      filename: 'FaurlundHavePartner.jsx',
+      presets: [['react', { runtime: 'classic' }]],
+      sourceType: 'module',
+    });
+
+    // Kør resultatet som et rigtigt ES-modul. Bare specifiers ('react',
+    // 'lucide-react', 'jspdf') slås op i sidens import map.
+    const url = URL.createObjectURL(new Blob([code], { type: 'text/javascript' }));
+    const { default: FaurlundHavePartner } = await import(url);
+    URL.revokeObjectURL(url);
+
+    createRoot(rod).render(
+      React.createElement(FaurlundHavePartner, {
+        onLead: (data) => console.log('[Demo] Lead modtaget:', data),
+      }),
+    );
+  } catch (e) {
+    console.error(e);
+    fejl(
+      'Modulet kunne ikke indlæses.',
+      'Siden skal serveres over http(s) — fx “npx serve .” — og har brug for internetforbindelse til React, lucide-react og Tailwind. Detaljer i browserkonsollen: ' +
+        e.message,
+    );
+  }
+</script>
+</body>
+</html>
